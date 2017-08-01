@@ -72,9 +72,9 @@
 
 ​		atomic、chrono、container、context、coroutine、coroutine2、date_time、exception、fiber、filesystem、graph、graph_parallel、iostreams、locale、log、math、metaparse、mpi、program_options、python、random、regex、serialization、signals、system、test、thread、timer、type_erasure、wave
 
-​	执行./bjam variant=release --build-dir=./build_tmps --layout=system --build-type complete --prefix=/usr/local 生成静态和动态、包含所有库的release
+​	执行./bjam variant=release --build-dir=./build_tmps link=static threading=multi runtime-link=shared --prefix=/usr/local 生成静态和动态、包含所有库的release
 
-./bjam variant=release link=shared threading=multi runtime-link=shared --build-dir=./build_tmps --build-type=complete --prefix=/usr/local
+#./bjam variant=release link=shared threading=multi runtime-link=shared --build-dir=./build_tmps --build-type=complete --prefix=/usr/local
 
 执行ldconfig
 
@@ -86,7 +86,7 @@
 
 下载最新发布版本[2017-08-01](https://github.com/google/double-conversion/archive/v2.0.1.tar.gz)，解压后执行
 
-​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON
+​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
 ​	make && make install
 
@@ -98,7 +98,7 @@
 
 下载最新发布版本[2017-08-01](https://github.com/google/glog/archive/v0.3.5.tar.gz)，解压后执行：
 
-​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON
+​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
 ​	make && make install
 
@@ -110,7 +110,7 @@
 
 下载最新版本[2017-08-01](https://github.com/gflags/gflags/archive/v2.2.1.tar.gz),解压缩后进入执行：
 
-​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON
+​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
 ​	make && make install
 
@@ -142,7 +142,7 @@
 
 下载最新版本[2017-08-01](https://github.com/facebook/wangle/archive/v2017.07.24.00.tar.gz)，解压缩后进入执行：
 
-​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON
+​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
 ​	make && make install
 
