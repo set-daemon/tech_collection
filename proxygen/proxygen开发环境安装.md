@@ -22,6 +22,10 @@
 
 ​	如果系统上版本低于要求，可参考《gcc编译器版本升级》
 
+	修改/etc/ld.so.conf
+		/usr/local/lib/c++/4.9.3
+		/usr/local/lib64
+	执行ldconfig
 
 
 #### cmake
@@ -120,7 +124,7 @@
 
 下载地址：[https://github.com/facebook/folly]()
 
-下载最新版本[2017-08-01](https://github.com/facebook/folly/archive/v2017.07.31.00.tar.gz)，解压缩后进入执行：
+下载最新版本[2017-08-01](https://github.com/facebook/folly/archive/v2017.07.31.00.tar.gz)，解压缩后进入子目录folly执行：
 
 ​	autoreconf -ivf
 
