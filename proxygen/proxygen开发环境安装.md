@@ -78,7 +78,7 @@
 
 ​	执行./bjam variant=release --build-dir=./build_tmps link=static threading=multi runtime-link=shared --prefix=/usr/local 生成静态和动态、包含所有库的release
 
-#./bjam variant=release link=shared threading=multi runtime-link=shared --build-dir=./build_tmps --build-type=complete --prefix=/usr/local
+
 
 执行ldconfig
 
@@ -89,6 +89,10 @@
 下载地址：[https://github.com/google/double-conversion](https://github.com/google/double-conversion)
 
 下载最新发布版本[2017-08-01](https://github.com/google/double-conversion/archive/v2.0.1.tar.gz)，解压后执行
+
+​	修改CMakeLists.txt，由于编译folly时会报错，增加
+
+​		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic")
 
 ​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
@@ -120,6 +124,20 @@
 
 
 
+#### 其它库
+
+​	CentOS下：
+
+yum install cmake gcc-c++.x86_64 flex bison.x86_64 krb5-devel.x86_64 cyrus-sasl-devel.x86_64 
+
+numactl-devel.x86_64 libgudev1-devel.x86_64 openssl-devel.x86_64 libcap-devel.x86_64 gperf.x86_64 autoconf.noarch libevent-devel.x86_64 libtool.x86_64 boost-devel.x86_64 gc.x86_64 snappy-devel.x86_64 unzip.x86_64 wget binutils-devel.x86_64
+
+​	Ubuntu下：
+
+sudo apt-get install g++ git cmake flex bison libkrb5-dev libsasl2-dev libnuma-dev pkg-config libssl-dev libcap-dev gperf autoconf-archive libtool libjemalloc-dev libsnappy-dev wget unzip
+
+
+
 ##### folly
 
 下载地址：[https://github.com/facebook/folly]()
@@ -128,7 +146,9 @@
 
 ​	autoreconf -ivf
 
-​	./configure --with-boost-libdir=/usr/local/lib
+​	修改experimental/logging/example/main.cpp，在里面增加一行include <gflags/gflags.h>
+
+​	./configure LDFLAGS="${LDFLAGS} -L/usr/local/lib" CPPFLAGS="${CPPFLAGS} -I/usr/local/include" --with-boost-libdir=/usr/local/lib 
 
 ​	make && make install
 
@@ -144,25 +164,11 @@
 
 下载地址：[https://github.com/facebook/wangle]()
 
-下载最新版本[2017-08-01](https://github.com/facebook/wangle/archive/v2017.07.24.00.tar.gz)，解压缩后进入执行：
+下载最新版本[2017-08-01](https://github.com/facebook/wangle/archive/v2017.07.24.00.tar.gz)，（注意选择好匹配版本的folly）解压缩后进入执行：
 
 ​	cmake . -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCMAKE_C_COMPILER=/usr/local/bin/gcc
 
 ​	make && make install
-
-
-
-#### 其它库
-
-​	CentOS下：
-
-yum install cmake gcc-c++.x86_64 flex bison.x86_64 krb5-devel.x86_64 cyrus-sasl-devel.x86_64 
-
-numactl-devel.x86_64 libgudev1-devel.x86_64 openssl-devel.x86_64 libcap-devel.x86_64 gperf.x86_64 autoconf.noarch libevent-devel.x86_64 libtool.x86_64 boost-devel.x86_64 gc.x86_64 snappy-devel.x86_64 unzip.x86_64 wget binutils-devel.x86_64
-
-​	Ubuntu下：
-
-sudo apt-get install g++ git cmake flex bison libkrb5-dev libsasl2-dev libnuma-dev pkg-config libssl-dev libcap-dev gperf autoconf-archive libtool libjemalloc-dev libsnappy-dev wget unzip
 
 
 
@@ -172,10 +178,12 @@ sudo apt-get install g++ git cmake flex bison libkrb5-dev libsasl2-dev libnuma-d
 
 下载最新版本[2017-08-01](https://github.com/facebook/proxygen/archive/v2017.07.31.00.tar.gz)，解压缩后进入执行：
 
+​	autoreconf -ivf
+
 ​	./configure
 
 ​	make -j 4 && make install
 
-
+注意：在make执行的时候会下载[googletest](https://codeload.github.com/google/googletest/zip/release-1.8.0)。
 
 执行ldconfig
