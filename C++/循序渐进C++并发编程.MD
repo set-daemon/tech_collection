@@ -1,5 +1,7 @@
 # 循序渐进C++并发编程
 
+*** 2017-08-07  set_daemon@126.com ***
+
 ​	并发基于计算机提供的能力，所以可以抛开语言来学习、分析和探讨，所谓的理论分析设计，不过相比于20、30年前，完成编程的成本极低，动手巩固所掌握的知识、学习验证新的知识还是非常有必要，所以还是先从C++开始这段旅程。
 
 
@@ -42,15 +44,19 @@
 
 ​		```
 
-​			\#include <unistd.h>
+​			\#include \<unistd.h>
 
-​			\#include <pthread.h>
+​			\#include \<pthread.h>
+
+​			\#include \<stdlib.h>
+
+​			\#include \<sys/time.h>
 
 
 
-​			\#include <iostream>
+​			\#include  \<iostream>
 
-​			\#include <thread>
+​			\#include \<thread>
 
 ​			using std::cout;
 
@@ -60,7 +66,11 @@
 
 
 
-​			// 为了简便，声明成员为public以直接访问
+​			/\*
+
+​			\* ThreadContext 线程Context，用于线程回调的输入参数
+
+​			\*/
 
 ​			class ThreadContext {
 
@@ -82,15 +92,63 @@
 
 ​				int data_len;
 
-​				int sum;
+​				int sum;		      // 总和
+
+​				double elapsed;  // 消耗毫秒数
 
 ​			};
 
 
 
+​			/\*
+
+​			\* Timing 监测类
+
+​			\*/
+
+​			class Timing {
+
+​			public:
+
+​				inline void start() {
+
+​					gettimeofday(&tb, NULL);
+
+​				}
+
+​				inline void stop() {
+
+​					gettimeofday(&te, NULL);
+
+​				}
+
+​				inline double elapsed() {
+
+​					return (te.tv_sec - tb.tv_sec)*1000.0 + (te.tv_usec - tb.tv_usec)/1000.0;
+
+​				}
+
+​			private:
+
+​				struct timeval tb;
+
+​				struct timeval te;
+
+​		 	};
+
+​			/\*
+
+​			\* sum 线程回调函数，也可以当作直接调用函数使用
+
+​			\*/
+
 ​			void* sum(void* args) {
 
 ​				ThreadContext* context = static_cast<ThreadContext*>(args);
+
+​				Timing tm;
+
+​				tm.start();
 
 ​				for (int i = 0; i < context->data_len; ++i) {
 
@@ -98,7 +156,9 @@
 
 ​				}
 
+​				tm.stop();
 
+​				context->elapsed = tm.elapsed();			
 
 ​				return NULL;
 
@@ -108,9 +168,17 @@
 
 ​			int main(int argc, char *argv[]) {
 
-​				int idata[100];
+​				int data_num = 1000;
 
-​				for (int i = 0; i < 100; ++i) {
+​				if (argc > 1) {
+
+​					data_num = atoi(argv[1]);
+
+​				}
+
+​				int *idata = new int[data_num];
+
+​				for (int i = 0; i < data_num; ++i) {
 
 ​					idata[i] = i;
 
@@ -118,17 +186,31 @@
 
 
 
+​				int half_num = data_num / 2;
+
+​				// 计算事务A : 开始
+
+​				Timing ta_tm;
+
+​				ta_tm.start();
+
 ​				pthread_t thread_handler;
 
-​				ThreadContext context_part1(idata, 50);
+​				ThreadContext context_part1(idata, half_num);
 
 ​				pthread_create(&thread_handler, NULL, sum,  (void*)&context_part1);
 
 
 
-​				ThreadContext context_part2(idata+50, 50);
+​				ThreadContext context_part2(idata+half_num, half_num);
+
+​				// C++11新特性
 
 ​				std::thread t1([&context_part2] () {
+
+​					Timing local_tm;
+
+​					local_tm.start();
 
 ​					for (int i = 0; i < context_part2.data_len; ++i) {
 
@@ -136,23 +218,45 @@
 
 ​					}
 
+​					local_tm.stop();
+
+​					context_part2.elapsed = local_tm.elapsed();
+
 ​				});
 
 ​				t1.join();
 
 ​				pthread_join(thread_handler, NULL);
 
-​				std::cout << "[child-thread] total sum = " << context_part1 + context_part2 << std::endl;
+​				// 计算事务A : 结束
 
+​				ta_tm.stop();
 
+​				
 
-​				ThreadContext context_part(idata, 100);
+​				// 计算事务B: 开始
+
+​				ThreadContext context_part(idata, data_num);
 
 ​				sum((void*)&context_part);
 
-​				std::cout << "[main-thread] total sum = " << context_part.sum << std::endl;
+​				// 计算事务B: 结束
 
- 
+
+
+​				// 输出结果
+
+​				std::cout << "case " << data_num  << "|" << context_part1.elapsed <<  "|" 
+
+​						<< context_part2.elapsed << "|" << ta_tm.elapsed()  << "|" 
+
+​						<<  context_part.elapsed << "|" <<  context_part1 + context_part2
+
+​						 << "|" << context_part.sum << std::endl;
+
+ 				
+
+​				delete idata;
 
 ​				return 0;
 
@@ -160,11 +264,59 @@
 
 ​		```
 
-​	将上述代码保存在文件test_thread.cc中，执行``` g++ -o test_thread test_thread.cc -std=c++14 -pthread```进行编译，再执行./test_thread，可以看到两个输出的结果均为4950。
+​	将上述代码保存在文件test_thread.cc中，执行``` g++ -g -o test_thread test_thread.cc -std=c++14 -pthread```进行编译，再执行./test_thread，可以看到事务A和事务B的求和结果相同。
 
-​	为了使用gdb，可以增加-g编译选项增加debug信息，调试gdb ./test_thread，在子线程启动前后增加断点，执行i threads，可以看到线程列表，执行`thread 线程id`，可以执行bt观察该线程的上下文。
+​	为了观察线程运行情况，可以gdb调试，在适当的地方加断点，执行`i threads`查看当前线程列表，以及`t 线程id`进入线程上下文，`bt`查看线程调用栈。
 
+​	
 
+​	理论上分析，事务A由两个线程组成，而事务B在主线程中执行且进程内无更多其它线程，所以事务A的执行环境是包含主线程在内的三个线程定时调度，其消耗时间会受线程启动及调度影响，而事务B基本无调度影响（除操作系统进程间的调度外），其执行消耗时长即为真实cpu执行计算时长。
+
+​	单独写一个测试脚本run_test_thread.sh：
+
+​		```
+
+​		\#!/bin/bash
+
+​		if [ $# -lt 4 ]; then
+
+​			echo "not enough parameters for $0"
+
+​			exit -1
+
+​		fi
+
+​		beg_i=$1
+
+​		end_i=$2
+
+​		step=$3
+
+​		case_times=$4
+
+​		for ((i = beg_i; i <= end_i; i += step ))
+
+​		do
+
+​			for ((j = 0; j < case_times; ++j))
+
+​			do
+
+​				./test_thread ${i}
+
+​			done
+
+​		done
+
+​		```
+
+​	找一台比较干净的机器，设置适当的测试范围和步长、次数，执行./run_test_thread.sh，将数据重定向到文件中后再统计，可以看到一定的规律：
+
+​		事务A的总时间 < 事务A的线程计算时间之和 占比约60.17%，小于A线程总和的4/5 占比约40.8%，小于A线程综合的3/5占比约7.06%；
+
+​		事务A的总时间 < 事务B的总时间，占比约0.79%；
+
+​	该结果说明事务A的两个线程是有一定并行化计算的，但由于计算是消耗CPU，无IO消耗，所以并发未体现出来。与预期事务A的总时间<=事务B总时间/2的结果相差太远，并行化不够，主要原因还是线程未被分派到单独的CPU上而被调度导致。
 
 
 
