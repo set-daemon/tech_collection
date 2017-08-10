@@ -320,6 +320,162 @@
 
 
 
+## 简单的异步例子
+
+按部就班意味着流程清晰明确，不容易出错，但不是所有场景都适合，例如做菜，不一定要把所有菜都洗好、切好才开始做，挑一个可以在灶上烧或煮的菜先做，在期间可以空留时间洗和切其它的菜，就单个菜而言，烧的时间不变，但整体时间就降低了，要不然做3个菜花2个小时，等着被饿疯了的媳妇骂吧。（再次体会并发的作用）
+
+以一个小例子开始研究初级的异步操作。
+
+​	```
+
+​	\#include \<iostream>
+
+​	\#include \<mutex>
+
+​	\#include \<thread>
+
+​	\#include \<chrono>
+
+
+
+​	using std::cout;
+
+​	using std::endl;
+
+​	using std::mutex;
+
+​	using std::thread;
+
+​	using std::this_thread::sleep_for;
+
+​	using std::chrono::milliseconds;
+
+
+
+​	template \<typename type>
+
+​	class AsyncWrapper {
+
+​	public:
+
+​		using CRef = const type&;
+
+​		using Ref = type&;
+
+​		using Ptr = type*;
+
+​		using VType = type;
+
+
+
+​		AsyncWrapper() {
+
+​			mut.lock();
+
+​		}
+
+​		CRef get() {
+
+​			mut.lock();
+
+​			mut.unlock();
+
+​			return v;
+
+​		}
+
+
+
+​		void set(CRef ref) {
+
+​			v = ref;
+
+​			mut.unlock();
+
+​		}
+
+​	private:
+
+​		std::mutex mut;
+
+​		VType v;
+
+​	};
+
+
+
+​	class Result {
+
+​	public:
+
+​		Result(int v) : val(v) {}
+
+​		Result() : Result(0) {}
+
+​		void operator = (const Result& r) { 	val = r.val; 	}
+
+​		void set(int v) { val = v; }
+
+​		int get() { return val;}
+
+​	private:
+
+​		int val;
+
+​	};
+
+
+
+​	int main(int argc, char *argv) {
+
+​		AsyncWrapper\<Result> wrap_result;
+
+​		std::cout << "main-thread cook " << std::endl;
+
+​		auto t  = std::thread([&wrap_result] () {
+
+​			Result tmp_result;
+
+​			std::cout << "cook something" << std::endl;
+
+​			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+​			tmp_result.set(10);
+
+​			wrapp_result.set(tmp_result);
+
+​			std::cout << "wash something" << std::endl;
+
+​		});
+
+​		std::cout << "do something else" << std::endl;
+
+​		std::cout << "to fetch the aysnchronized result" << std::endl;
+
+​		std::cout << wrap_result.get().get() << std::endl;
+
+​		t.join();
+
+​		return 0;
+
+​	}
+
+​	```
+
+将上面的代码保存至test_async.cc，编译`g++ -o test_async -std=c++11 -pthread test_async.cc`，执行`./test_async`。
+
+主要参考了c++11的promise和future的思路，仿写了一个简单的异步数据共享模板，不用手工再去对数据做线程保护，直接封装起来立刻使用，简单快捷。实际promise/future更复杂，等待数据完成可以使用尝试性的、超时性的解决方案，更容易满足需求，不过\<future>的代码比较复杂，1000多行，难在模板的使用和理解。
+
+
+
+## 线程的异步套装：C++11 Promise/Future
+
+
+
+
+
+
+
 ## 参考
 
 《七周七并发模型》
