@@ -480,5 +480,11 @@
 
 《七周七并发模型》
 
+[《深入理解并行编程》](https://www.amazon.cn/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B-Paul-E-Mckenney/dp/B072ZLXV7F/ref=sr_1_1?s=books&ie=UTF8&qid=1503019847&sr=1-1&keywords=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B)
+
+[《C++ concurrency in action》](https://www.amazon.cn/C-Concurrency-Williams-Anthony/dp/1933988770/ref=sr_1_2?s=books&ie=UTF8&qid=1503018945&sr=1-2&keywords=c+concurrency+in+action)
+
 http://blog.csdn.net/cxroom/article/details/9787155
+
+[并发编程网](http://ifeve.com/questions/)
 
