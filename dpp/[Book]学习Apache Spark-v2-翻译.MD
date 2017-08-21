@@ -205,11 +205,11 @@ Roger和Fawad都看了两部电影，可以看到他们有十分不同的品味�
 
 计算Roger和Fawad的余弦相似度，其结果如下：
 
-​	$$Sim(Roger,Fawad) = 0.153$$
+​	$$Sim(Roger,Fawad) = 0.153​$$
 
 然而，当我们计算Roger和Adrian之间的余弦相似度，其结果截然相反：
 
-​	![$$Sim(Roger,Adrian) = 0.780$$0](http://latex.codecogs.com/gif.latex?Sim(Roger,Adrian) = 0.780)
+​	![$$Sim(Roger,Adrian) = 0.780$$0](http://latex.codecogs.com/gif.latex?Sim(Roger,Adrian)=0.780)
 
 这三个评级向量的余弦相似度清晰地表明，与Roger和Fawad之间的相似度比较而言，Roger和Adrian之间有更多相似的兴趣。这也很直观。然而，余弦相似度的假设存在一个轻微的问题，我们设定丢失值为0，这是由评级值的数值本质所决定，且意味着丢失的评级是负评级。如果Adrian没有给“美丽心灵”评级，可假设其评级是负的。这不是正确的，而且当面对更大、更多样化数据集时，会得到一个负结果。
 
