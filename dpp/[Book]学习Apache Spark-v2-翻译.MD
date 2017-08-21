@@ -170,25 +170,25 @@ Roger和Fawad都对两部电影做了评级。为了理解两个用户之间的�
 
 ***Jaccard指数***（index），又称***Jaccard相似度***系数，是用于比较样本集的相似性和多样性的一种统计。由于本章主要目标不在于该系数，所以不对其细节做更深的探讨，您可以访问https://en.wikipedia.org/wiki/Jaccard_index来了解更多。在我们这个例子中，Jaccard相似度可以用数学公式表示，如下：
 
-$$Sim(Roger,Faward) = |r(Roger)  \bigcap r(Fawad)|/|r(Roger) \bigcup r(Fawad)|$$
+![$$Sim(Roger,Faward) = |r(Roger)  \bigcap r(Fawad)|/|r(Roger) \bigcup r(Fawad)|$$](http://latex.codecogs.com/gif.latex?Sim(Roger,Faward)=|r(Roger)\bigcapr(Fawad)|/|r(Roger)\bigcupr(Fawad)|)
 
-$$Sim(Roger,Adrian) = |r(Roger) \bigcap r(Adrian)| / |r(Roger) \bigcup r(Adrian)|$$
+![$$Sim(Roger,Adrian) = |r(Roger) \bigcap r(Adrian)| / |r(Roger) \bigcup r(Adrian)|$$](http://latex.codecogs.com/gif.latex?Sim(Roger,Adrian)=|r(Roger) \bigcap r(Adrian)|/|r(Roger)\bigcupr(Adrian)|)
 
 Roger和Fawad都看了两部电影，可以看到他们有十分不同的品味：
 
-​	$$r(Roger) \bigcap r(Fawad) = 1$$
+​	![$$r(Roger) \bigcap r(Fawad) = 1$$](http://latex.codecogs.com/gif.latex?r(Roger) \bigcap r(Fawad)=1)
 
-​	$$r(Roger) \bigcup r(Fawad) = 3$$
+​	![$$r(Roger) \bigcup r(Fawad) = 3$$](http://latex.codecogs.com/gif.latex?r(Roger) \bigcup r(Fawad)=3)
 
-​	$$Sim(Roger,Fawad) = 1/3$$
+​	![$$Sim(Roger,Fawad) = 1/3$$](http://latex.codecogs.com/gif.latex?Sim(Roger,Fawad)=1/3)
 
 另一方面，Roger和Adrian同样都看过两部电影，但有相似的品味（？难道表格中数据有缺失）：
 
-​	$$r(Roger) \bigcap r(Adrian) = 1$$
+​	![$$r(Roger) \bigcap r(Adrian) = 1$$](http://latex.codecogs.com/gif.latex?r(Roger) \bigcap r(Adrian)=1)
 
-​	$$r(Roger) \bigcup r(Adrian) = 3$$
+​	![$$r(Roger) \bigcup r(Adrian) = 3$$](http://latex.codecogs.com/gif.latex?r(Roger) \bigcup r(Adrian)=3)
 
-​	$$Sim(Roger,Adrian) = 1/3$$
+​	![$$Sim(Roger,Adrian) = 1/3$$](http://latex.codecogs.com/gif.latex?Sim(Roger,Adrian)=1/3)
 
 这个例子揭示了Jaccard相似度系数的缺点，它只是用了评级的个数，而非真实能真正表示用户之间相似度和品味的评级数值。
 
@@ -205,7 +205,7 @@ Roger和Fawad都看了两部电影，可以看到他们有十分不同的品味�
 
 计算Roger和Fawad的余弦相似度，其结果如下：
 
-​	$$Sim(Roger,Fawad) = 0.153​$$
+​	![$$Sim(Roger,Fawad) = 0.153$$](http://latex.codecogs.com/gif.latex?Sim(Roger,Fawad)=0.153)
 
 然而，当我们计算Roger和Adrian之间的余弦相似度，其结果截然相反：
 
