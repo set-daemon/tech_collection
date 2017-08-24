@@ -78,6 +78,14 @@ Ubuntu：
 
 
 
+#### libmcrypt
+
+CentOS：yum install libmcrypt-devel.x86_64 libmcrypt.x86_64
+
+ubuntu：
+
+
+
 #### gd
 
 CentOS：yum install gd-devel.x86_64 
@@ -139,6 +147,16 @@ make &&make install
 ######编译安装pdo_mysql
 
 进入php源码包下的ext/pdo_mysql目录下，执行以下操作：
+
+​	phpize
+
+​	./configure --with-php-config=/usr/local/php/bin/php-config
+
+​	make && make install
+
+###### 编译安装mcrypt
+
+进入php源码包下的ext/mcrypt目录下，执行以下操作：
 
 ​	phpize
 
