@@ -259,16 +259,39 @@ $$RMSE=\sqrt{(\sum_{(u,i)\in_T}{r_{(u,i)}-r_{(u,i)}^*})/ N}$$
 
 
 
-## 使用Spark构建推荐系统
+##使用Spark构建推荐系统
+以Spark构建的推荐系统为例子继续推进本章的内容。由于大多数用户对电影更熟悉，我们将用MovieLens的数据集来构建推荐系统，<u>对数据做一些分析，以及看一看一些选项</u>。推荐系统的理论和实践例子应会给你一个搭建自己的系统很好的起点。
 
+####样本数据集
+我们将使用MovieLens的100k数据集，在本书写作时更新时间为2016年11月。这个数据集（ml-latest-small）描述了来自提供电影推荐服务的MovieLens（[https://movielens.org/](https://movielens.org)）的5星评级和文本标记活动，包括100004个评级和9125个电影上的1296个标签应用，由671个用户产生于1995年2月9日至2016年11月16日。这个数据集生成于2016年11月17日，可在网址[http://bit.ly/24PV0hK](http://bit.ly/24PV0hK)下载，更多细节参考[http://bit.ly/2i6yste](http://bit.ly/2i6yste)。下面将浏览一遍数据集中部分文件的结构。
+	1.评级数据结构
+	所有的评级数据由ratings.csv存储，每一行代表每个用户对电影的评级，其格式如下：
+		userID, movieID, rating, timeStamp
+	评级数据文件内容样例：
+		userId,movieId,rating,timestamp
+		1,31,2.5,1260759144
+		1,1029,3.0,1260759179
+		1,1061,3.0,1260759182
+		1,1129,2.0,1260759185
+		1,1172,4.0,1260759205
+		1,1263,2.0,1260759151
+		1,1287,2.0,1260759187
+		1,1293,2.0,1260759148
+		1,1339,3.5,1260759125
+	2.标签数据结构
+	所有的标签数据存放于文件tags.csv中，每一行代表用户对一部电影的标签，文件格式如下：
+		userid,movieid,tag,timestamp
+	tag.csv文件内容样例：
+		userId,movieId,tag
 
+	3.电影数据结构
+	电影信息存放于文件movies.csv，在文件头之后的每一行代表一部电影的信息，其格式为：
+		MovieId,Title,Genres	
+	电影文件内容样例：
+		movieid,title,genres	
 
-
-
-
-
-
-
+####Spark如何支持推荐
+Spark机器学习库spark.ml支持基于模型的CF，在该模型中，隐语义因子可以描述物品，如之前所述，能用来预估缺失项。Spark的spark.ml包支持Alternative Least Squares(ALS)算法学习隐语义因子。ALS是备选最小二乘法（Alternative least squares）实现矩阵分解算法，将用户-物品矩阵R分解成用户-特征矩阵U和物品-特征矩阵M，并用并行方式执行。
 
 
 
