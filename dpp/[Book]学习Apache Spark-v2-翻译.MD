@@ -480,10 +480,34 @@ Spark API基于DataFrame，当前实现使用了以下参数，其它的参数�
 
 在迭代的最后，你将得到最好模型参数bestModel，可用于对用户生成推荐。
 
-#### 使用隐性偏好
+####使用隐性偏好
+在我们的例子中使用了显性评级，如果评级矩阵基于之前讨论的隐性信号，可以将隐性偏好设置为True：
+	val als = new ALS()
+		.setMaxIter(15)
+		.setRegParam(0.01)
+		.setImplicitPrefs(true)
+		.setUserCol("userId")
+		.setItemCol("itemId")
 
+####心智检查(sanity checking)
+由于已经加载好电影数据，我们也能检查预估是否准确和说得通。这通常意味着交叉检查来判断电影推荐是否真正工作。例如，你也许想知道动作电影是否推荐给喜欢看动作片的人，惊悚电影推荐给习惯观看惊悚片的人。这通常是整个练习的重要部分。
+####模型部署
+所以你构建了一个很棒的模型，能给系统带来很大的提升。下一步该做什么？当然这并没有结束。正如构建一个能带来提升的模型很重要，部署模型到产品中也非常关键。重要的是要理解，模型开发环境可能是基于spark，但是模型实施环境是多样的。除了实施环境，模型评分可能是在离线或在线模式。一个离线模式的例子可以是流失预估，你将数据分段，识别哪些客户将要流失，并配备流失处理策略。在线评分可以是当用户等待响应时。在线评分场景通常需要低延迟，例如，在线作弊检测，或广告位竞价。
+最终，需要重要掌握的是，业务在持续演进，同样模型本身的需求也是变化的，你需要持续评估已经部署的模型是否有必要改变。装配警示很重要，这可以更新模型上带来的陈旧不适应，及随后评估的需求。模型一定要有一个合适的开发、测试和产品环境的发布过程。很多公司通常使用A/B测试来应对不同模型版本，来掌握哪个模型在哪些特定场景工作的更好。
+如果你愿意学习更多关于模型部署的知识，建议从http://bit.ly/SparkModelDeployment开始。
+###参考
+本章的内容使用了下面的文章、博客和视频，这也是提供给用户更深入的阅读材料：
+	1. Coursera课程 Mining Massive Datasets by Stanford University。
+	2. 长尾理论-https://www.wired.com/2004/10/tail.
+	3. 哈佛CS50-推荐系统，https://www.youtube.com/watch?v=Eeg1DEeWUjA
+	4. https://en.wikipedia.org/wiki/Cosine_similarity
+	5. https://en.wikipedia.org/wiki/Jaccard_index
+	6. F. Maxwell Harper and Joseph A. Konstan. 2015. The MovieLens Datasets: History and Context. ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4, Article 19 (December 2015), 19 pages. DOI= h t t p ://d x . d o i . o r g /10. 1145/2827872
+	7. http://ampcamp.berkeley.edu/big-data-mini-course/movie-recommendation-with-mllib.html
 
-
+####摘要
+这里对本章做一个总结，我们已经过了一遍推荐系统，包括理论以及使用Scala实现的例子。我从Coursera的数据挖掘课程上学习到了很多关于该理论的知识，这是一个神奇的平台。我希望我们能够公正地对待该主题。我们一直把重点放在推荐系统涉及到的设计和相关因素上，一旦你理解了所要面对的问题，我一直相信该方案的工程化是很简单的。
+下一章的重点是另一个案例研究，即流失预估，是任何用户驱动的组织中实际案例最流行中的一个，用于掌握获取新用户的成本和已存在用户的留存。
 
 
 
