@@ -283,7 +283,7 @@ $$RMSE=\sqrt{(\sum_{(u,i)\in_T}{r_{(u,i)}-r_{(u,i)}^*})/ N}$$
 		userid,movieid,tag,timestamp
 	tag.csv文件内容样例：
 		userId,movieId,tag
-
+	
 	3.电影数据结构
 	电影信息存放于文件movies.csv，在文件头之后的每一行代表一部电影的信息，其格式为：
 		MovieId,Title,Genres	
@@ -292,6 +292,227 @@ $$RMSE=\sqrt{(\sum_{(u,i)\in_T}{r_{(u,i)}-r_{(u,i)}^*})/ N}$$
 
 ####Spark如何支持推荐
 Spark机器学习库spark.ml支持基于模型的CF，在该模型中，隐语义因子可以描述物品，如之前所述，能用来预估缺失项。Spark的spark.ml包支持Alternative Least Squares(ALS)算法学习隐语义因子。ALS是备选最小二乘法（Alternative least squares）实现矩阵分解算法，将用户-物品矩阵R分解成用户-特征矩阵U和物品-特征矩阵M，并用并行方式执行。
+
+ALS算法找出能解释用户-物品评级的隐语义因子，使用迭代方法来逼近最优的因子权重，最小化预测值与实际评级直接的最小二乘。ALS是非常弹性且易于并行化的算法，请查看网址来获得更多信息：http://bit.ly/2jhXx29（也可以在http://yifanhu.net/PUB/cf.pdf找到）。
+
+Spark API基于DataFrame，当前实现使用了以下参数，其它的参数描述请参考http://bit.ly/2fk8vXh：
+
+| 参数名称      | 描述                                    |
+| --------- | ------------------------------------- |
+| numBlocks | 性能调优选项，指用户及商品将要被分区的块数，用于并行化计算（默认值10）  |
+| rank      | 指模型中隐语义因子的个数                          |
+| maxIter   | 如之前所提到的，ALS是一个迭代算法，这个参数控制了迭代次数（默认值10） |
+
+现在开启推荐系统的开发旅程。
+
+####导入相关库
+
+通常，在开始任何编码前，我们需要导入相关的库：
+
+​	import org.apache.spark.ml.evaluation.RegressionEvaluator
+
+​	import org.apache.spark.ml.recommendation.ALS
+
+​	import org.apache.spark.sql._
+
+![import_relative_library](attachments/scala_import_relative_lib.png)
+
+####定义评级的模式
+
+如之前所提到的，评级数据可以在文件ratings.csv中得到。我们将使用DataFrame API来加载这个数据，并使用编码器类来实现模式定义。在本书编写时，这个类还处于试验阶段，它将一个类型为T的JVM对象与一个内部的Spark SQL表达互转，如果不是用这个类，将需要用StructType、StructField和DataType类来定义一个特殊行对象的模式，这显得很繁杂：
+
+​	case class Ratings(userId:Int, movieId:Int, rating:Double, ratingTs:Long)
+
+​	val ratingsSchema = Encoders.product[Ratings].schema
+
+#### 定义电影数据的模式
+
+在加载数据集之前，我们将用同样的策略来定义电影数据模式：
+
+​	case class Movies(moveId:Int, title:String, genre:String)
+
+​	val moviesSchema = Encoders.product[Movies].schema
+
+![define_schema_for_movie_and_ratings.png](attachments/define_schema_for_movie_and_ratings.png)
+
+#### 加载评级和电影数据
+
+现在将评级和电影数据读入到DataFrame中：
+
+​	val ratings = spark.read.option("header", "true")
+
+​				.schema(reatingsSchema)
+
+​				.csv("hdfs://sparkmaster:8020/user/hdfs/sampledata/ratings.csv")
+
+​	val movies = spark.read.option("header", "true")
+
+​				.schema(moviesSchema)
+
+​				.csv("hdfs://sparkmaster:8020/user/hdfs/sampledata/movies.csv")
+
+加载评级和电影数据后，查看头5个记录以确认数据被正确加载。
+
+![loading_ratings_movies_data_see_top.png](attachments/loading_ratings_movies_data_see_top.png)
+
+####数据分区
+
+如在本章开始部分我们所解释的，我们将会把数据划分成训练和验证两部分。用于练习的目的，我们使用70/30比例切分数据，这很常见，也有一些专业人士喜欢80/20比例。我们将用randomSplit()方法来划分数据：
+
+​	val Array(train, test) = ratings.randomSplit(Array(0.7, 0.3))
+
+![data_partitioner_for_practice.png](attachments/data_partitioner_for_practice.png)
+
+####训练ALS模型
+
+现在我们将使用交替最小二乘矩阵分解法，在本章前面讨论过该方法的理论，关键参数是：
+
+​	***最大迭代数***参数定义了参数的最大个数
+
+​	***正则化参数***，设置成0.01
+在本章之前讨论的，推荐可以在多个行业使用，通常有三个关注实体：
+
+​	给物品评级的用户
+
+​	被评级的物品
+
+​	用户对特定物品的评级
+
+你需要将合适的列名传递给ALS模型，并使用参数来适配训练数据集，以生成模型：
+
+​	val als = new ALS()
+
+​		.setMaxIter(15)
+
+​		.setRegParam(0.01)
+
+​		.setUserCol("userId")
+
+​		.setItemCol("movieId")
+
+​		.setRatingCol("rating")
+
+​	val recommendationModel = als.fit(train)
+
+![als_training_model.png](attachments/als_training_model.png)
+
+#### 预估测试数据集
+
+一旦你得到模型，你可以用转换选项来转换输入数据集，基于模型生成对应的预估值：
+
+​	val predictions = recommendationModel.transform(test)
+
+这个结果数据集有一个额外的列，默认命名为predictions，包含从模型得到的预估值。你可以用实际评级与模型生成的预估值进行比较。
+
+![prediction_from_the_als_model.png](attachments/prediction_from_the_als_model.png)
+
+
+
+####评估模型效果
+
+一旦我们得到模型和指标集合，可以用回归评估器来评估结果。这个回归评估器支持以下指标：
+
+​	***RMSE***，根均方差（默认）
+
+​	***SE***，平均方差
+
+​	***MAE***，平均绝对差
+
+我们已经在本章前面内容讨论过均方差的细节，接下来用该方法来评估预估值的结果。
+
+![evaluate_prediction_by_regression_rmse.png](attachments/evaluate_prediction_by_regression_rmse.png)
+
+这绝不是一个优化的模型，其效果可以通过调整各种选项来优化。一个比较好的方法是选择各种参数的边界，例如，迭代次数10到20，lambda值位于0.1到6.0之间，等等，之后在一个循环中执行，每次比较计算好的最佳RMSE，如果你的RMSE比之前存储的RMSE小，可以将当前模型作为最佳模型，当前RMSE作为最佳RMSE。
+
+这里有一个快速的例子，来展现你将如何试图达到优化模型的目的，该例子改编自一个RDD样例，来源于AmpLab(http://bit.ly/2jaFE6i)。本例子更多细节可从本书GitHub页面上得到：
+
+​	val ranks = List(1,2,3,4,5,6,7,8,9,10)
+
+​	val lambdas = List(0.1, 0.2, 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,2,3,4,5,7,10.0)
+
+​	val regParams = List(0.01, 0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.10,10)
+
+​	val numIters = List(5,10,15,20)
+
+​	var bestModel: Option[ALSModel] = None
+
+​	var optimalRMSE = Double.MaxValue
+
+​	var bestRank = 0
+
+​	var bestRegParam = -1.0
+
+​	var bestNumIter = -1
+
+​	/** 迭代计算-寻找最佳模型 */
+
+​	for (rank <- ranks; regParam <- regParams; numIter <- numIters ) {
+
+​		val als = new ALS().setMaxIter(numIter).setRank(rank)
+
+​				.setRegParam(regParam).setUserCol("userId")
+
+​				.setItemCol("movieId").setRatingCol("rating")
+
+​		val model = als.fit(train)
+
+​		val predictions = model.transform(valid)
+
+​		val currentRMSE = evaluator.evaluate(predictins.filter("prediction <> 'NaN'"))
+
+​		println("Metrics => RMSE (Validation) = " + currentRMSE + ": Model Metrics(rank = )" + rank + ", regParam = " + regParam + ", and numIter = " + numIter + ").")
+
+​		if (currentRMSE < optimalRMSE) {
+
+​			bestModel = Some(model)
+
+​			optimalRMSE = currentRMSE
+
+​			bestRank = rank
+
+​			bestRegParam = regParam
+
+​			bestNumIter = numIter
+
+​		}
+
+​	}
+
+在迭代的最后，你将得到最好模型参数bestModel，可用于对用户生成推荐。
+
+#### 使用隐性偏好
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
