@@ -291,7 +291,29 @@ adj 试探性; 探索的，考察的，探索的; “explorative”的变体;
 
 adv 或者; 二者择一地; 要不然;
 
+####synopsis 英[sɪˈnɒpsɪs] 美[sɪˈnɑ:psɪs]
 
+n 大纲; 摘要，梗概;
+
+#### slice 英[slaɪs] 美[slaɪs]
+
+vt 切成片; 切下; 划分;
+
+n 薄片; 一部分; （因失误而打出的） 曲线球;
+
+vi 斜击;
+
+#### manipulation 英[məˌnɪpjʊ'leɪʃn] 美[məˌnɪpjʊˈleʃən]
+
+n 操纵; 控制; （熟练的） 操作; （对账目等的） 伪造;
+
+#### cryptographic 英['krɪptəʊ'græfɪk] 美[ˌkrɪptə'græfɪk]
+
+adj 关于暗号的，用密码写的;
+
+#### analogous 英[əˈnæləgəs] 美[əˈnæləɡəs]
+
+adj 相似的，可比拟的; <生>同功的; 模拟式;
 
 
 
