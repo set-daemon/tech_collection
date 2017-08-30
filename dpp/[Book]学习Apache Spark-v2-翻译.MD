@@ -153,7 +153,139 @@ Apache Mesos是一个加利福尼亚伯克利大学开发的开源集群管理�
 
 ​	spark-submit
 
-无论你使用那个shell，都基于你过去的经验和能力，
+无论你使用那个shell，都基于你过去的经验和能力，且都必须掌握好一个抽象概念，那是你在Spark集群上能操作数据的手柄，可以是本地的，也可以是跨分布在上千台机器上的。这个抽象概念在本处所指的是Resilient Distributed Datasets（RDD），是Spark上数据和计算的基础单元。顾名思义，除其它之外，它们还有两个关键特性：
+
+​	***它们是弹性的***：如果内存中的数据丢失了，新的RDD将被创建
+
+​	***它们是分布式的***：你能用Java或Python操作跨集群分布的对象
+
+*第二章，Spark RDD的转换和动作*，将会带你领略RDD的复杂精细度，当然也将讨论其它基于RDD创建的更高层API，例如Dataframe和机器学习管道。
+
+让我们快速给你展示如何使用Spark浏览本地文件系统的文件，之前在图1.2中，我们浏览spark的文件夹内容时，我们看到一个名为README.md的文件，该文件包含了Spark的概览、在线文档的链接，以及开放给开发者和分析师的其它有用的东西。我们即将读取那个文件，并将其转化成一个RDD。
+
+为了进入Scala shell，请操作接下来的命令：
+
+​	./bin/spark-shell
+
+用这个Scala shell运行以下代码：
+
+​	val textFile = sc.textFile("README.md") #创建一个名为textFile的RDD
+
+你会立即得到这种类型的变量被创建的确认提示：
+
+![creating_a_simple_rdd.png](attachments/creating_a_simple_rdd.png)
+
+如果你想查看RDD支持的操作类型，在命令行提示符后写入变量名“textFile.”（注：后面加原点号），并按下Tab键，你将看到以下可用的操作/动作列表：
+
+![operations_on_string_rdd.png](attachments/operations_on_string_rdd.png)
+
+由于我们的目标是做一些基本探索性的分析，我们将看一看该RDD上的一些基本操作。
+
+***注意***：RDD可以在它们上调用action或transformation，但是它们的结果却是不同的。transformation的结果是一个新创建的RDD，而action的结果是RDD被执行、并返回结果给客户端。
+
+让我们看一看在该RDD中的前7行：
+
+​	textFile.take(7)  #以字符串数组的形式返回文件中的前7行
+
+其结果看起来像：
+
+![first_7_lines_from_file.png](attachments/first_7_lines_from_file.png)
+
+或者，让我们看一看该文件中总行数，<u>使用字符串RDD上另一个作用像是list的action</u>。请注意，在RDD中，文件中的每一行被看作是单独的项：
+
+​	textFile.count() # 返回总项数
+
+![count_rdd_lines.png](attachments/count_rdd_lines.png)
+
+我们了解了几个action后，现在再来了解下字符串RDD操作支持的transformation。如前所述，transformation是一直返回结果为另一个RDD的操作。
+
+试着对数据文件过滤出包含关键词Apache的数据行：
+
+​	val linesWithApache = textFile.filter(line => line.contains("Apache"))
+
+该transformation将返回另一个字符串RDD。
+
+你也可以将多个transformation和action串起来。举个例子，下面将过滤文本文件中包含关键词Apache的行，然后返回在结果RDD中这样的行数：
+
+​	textFile.filter(line=>line.contains("Apache")).count()
+
+![simple_transformations_and_actions.png](attachments/simple_transformations_and_actions.png)
+
+你可以从Spark UI上监视在集群中运行的job，默认端口4040。
+
+如果你用浏览器访问http://localhost:4040，你将看到以下Spark驱动程序的UI：
+
+![spark_driver_program_UI.png](attachments/spark_driver_program_UI.png)
+
+取决于你运行了多少个job，你将看到基于所处状态的job列表（注：分为运行中、失败、完成）。通过UI，你可以看到job类型的概览，提交日期/时间，所用时长，完成的stage数。如果你想查看job的详情，简单的点击job的描述，将会带你进入到另一个展示所有完成stage详情的页面。你也许想看该job的某个stage，点击它，你会得到更多关于该job的详细指标。
+
+![spark_job_stage_ui.png](attachments/spark_job_stage_ui.png)
+
+我们将在后续章节中介绍UI更多的细节，例如DAG Visualization、Event Timeline和其它方面，当然给你展示这些的目的是让你明白，如何在运行和完成后监视你的job。
+
+在查看更多例子之前，我们用为Python程序员准备的Python Shell重演一遍同样的例子。
+
+####Python shell例子
+
+为了满足习惯用Python而非Scala的读者，我们将在Python shell下执行一遍之前的例子。
+
+为了进入Python shell，请执行以下命令：
+
+​	./bin/pyspark
+你将看到类似下面的输出：
+
+![spark_python_shell.png](attachments/spark_python_shell.png)
+
+如果你仔细查看这个输出，你将看到框架试图在端口4040上启动Spark UI，但没能成功（注：原书的截图是有这个提示，但是自己的环境没有输出），最终在4041端口上启动的。你能猜到为什么吗？原因是4040端口已经被占用，Spark将在4040端口后继续尝试，直到找到一个可用于绑定UI的端口。
+
+让我们在Python shell上使用python做一些基本的数据操作，再次读入README.md文件：
+
+​	textFile  = sc.textFile("README.md") # 创建一个读取文件README.md内容的名为textFile的RDD
+
+读取该文件的前7行：
+
+​	textFile.take(7)
+
+查看文件总行数：
+
+​	textFile.count()
+
+你将看到类似下面的输出：
+
+![spark_basic_exploratory_by_python.png](attachments/spark_basic_exploratory_by_python.png)
+
+和使用Scala shell展示的一样，我们也能用Python来运用transformation，并将transformation和action串起来。
+
+使用以下的代码对数据集应用transformation操作，记住，transformation返回的结果是另一个RDD。
+
+下面的代码应用transformation，过滤输入数据集，并找出包含单词Apache的行：
+
+​	lineWithApache = textFile.filter(lambda line: "Apache" in line) # 查找包含Apache的行
+
+一旦得到过滤后的RDD，对其应用action：
+
+​	lineWithApache.count() //计算项目总数
+
+再将transformation和action串起来：
+
+​	textFile.filter(lambda line: "Apache" in line).count()  // 将transformation和action串起来
+
+![chained_transformation_action_by_python.png](attachments/chained_transformation_action_by_python.png)
+
+如果你不熟悉Python的lambda函数，此时也不必过于担心，因为展示该用法的目的是告诉你用spark做数据探索是很容易的。我们将在之后的章节中涵盖更多的细节。
+
+如果你想看驱动程序的UI，你会发现，相比用Scala shell执行的结果，新生成的总结指标更清晰。
+![spark_driver_ui_by_python.png](attachments/spark_driver_ui_by_python.png)
+
+到目前为止，我们完成了一些基本的Spark程序，所以现在也值得去对Spark的架构做更多理解。在下一节，我们将深挖Spark的架构，再在下一章用更多的代码例子来解释有关RDD的不同概念。
+
+
+
+####Spark架构
+
+
+
+
 
 ## 第9章  构建一个推荐系统
 
