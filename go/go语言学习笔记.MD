@@ -163,9 +163,55 @@
 | mime      |                 |                                          |
 |           | multipart       |                                          |
 |           | quotedprintable |                                          |
-|           |                 |                                          |
-
-
+| net       | -               |                                          |
+|           | http            |   提供http客户端和服务器实现             |
+|           |   --> cgi       |   CGI（通用网关接口)  RFC 3875           |
+|           |   --> cookiejar |   内存型RFC 兼容6265 http.CookieJar      |
+|           |   --> fcgi      |   实现FastCGI协议                        |
+|           |   --> httptest  |   为http测试提供实用工具                 |
+|           |   --> httptrace |   提供HTTP客户端请求内部事件追踪机制     |
+|           |   --> httputil  |   HTTP实用函数                           |
+|           |   --> pprot     |   按pprot可视化工具所期望的格式提供通过服务器端运行时的优化数据|
+|           | mail            |   解析邮件消息解析                       |
+|           | rpc             |   提供通过网络或其它I/O连接方式访问对象暴露出来的方法|
+|           |   --> jsonrpc   |   JSON-RPC 1.0 客户端代码和服务端代码    |
+|           | smtp            |   简单邮件传输协议，RFC 5321             |
+|           | textproto       |   支持HTTP、NNTP和SMTP方式下的基于文本的请求/响应协议|
+|           | url             |   解析URL和query转义                     |
+| os        | exec            |   运行外部命令                           |
+|           | signal          |   访问到来的信号                         |
+|           | user            |   通过用户名和id查询用户帐号             |
+| path      | -               |  |
+|           | filepath        | 支持目标操作系统定义的文件路径操作       |
+| plugin    | -              | |
+| reflect   | -               | |
+| regexp    | -               | |
+|           | syntax          | |
+| runtime   | -               | |
+|           | cgo             | |
+|           | debug           | |
+|           | msan            | |
+|           | pprof           | |
+|           | race            | |
+|           | trace           | |
+|sort       | -               | |
+|strconv    | -               | |
+|strings    | -               | |
+|sync       | -               | |
+|           | atomic          | |
+|syscall    | -               | |
+|testing    | -               | |
+|           | iotest          | |
+|           | quick           | |
+|text       | scanner         | |
+|           | tabwriter       | |
+|           | template        | |
+|           |   --> parse     | |
+|time       | -               | |
+|unicode    | -               | |
+|           | utf16           | |
+|           | utf8            | |
+|unsafe     |                 | |
 
 
 
