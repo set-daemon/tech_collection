@@ -333,7 +333,35 @@ partition是在Spark集群上分发的一个数据逻辑块。很多情况下，
 
 ######SparkContext
 
+***SparkContext***是Spark session的进入点，也是Spark集群的连接，能用来在集群上创建RDDs、accumulators和广播变量。每个JVM最好只有一个活跃的SparkContext，因此在创建一个新的SparkContext前要对当前活跃的调用stop()操作。你也许注意到了，之前在本地模式下，无论我们启动Python或Scala shell，我们都有一个自动创建的SparkContext对象，变量sc指向该SparkContext对象。我们不需要创建SparkContext，而直接用它从文本文件中创建了RDD。
 
+###### Spark Session
+
+Spark session是spark编程下使用dataset和DataFrame API编程的进入点。
+
+#### Apache Spark集群管理器类型
+
+据之前所讨论的，Apache Spark当前支持三种集群管理器：
+
+​	独立集群管理器
+
+​	Apache Mesos
+
+​	Hadoop YARN
+
+我们将在第8章***集群模式下的操作***详细介绍这些类型的启用，讨论了集群模式下的操作。
+
+#### 用Apache Spark创建独立应用
+
+直至现在我们在Scala和Python shell下使用spark做探索性分析，同样也能使运行Java、Scala、Python或R语言的独立应用操作Spark。在之前看到的，Spark shell和PySpark为你提供了SparkContext，然而，当你在使用一个应用时，你需要初始化你自己的SparkContext。一旦你得道SparkContext的引用，剩下的API与在交互查询分析环境下保持完全一致。毕竟，这是相同的对象，不同的是这两个context的运行环境。
+
+在你的应用中使用Spark方法的区别在于你更倾向的语言。所有Spark artifact由Maven中心服务，你可以用以下标准增加一个maven依赖：
+
+​	groupId: org.apache.spark
+
+​	artifactId: spark_core_2.10
+
+​	version: 1.6.1
 
 
 
