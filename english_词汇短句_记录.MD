@@ -333,6 +333,48 @@ n 适合; 匹配; 合身; 发作;
 
 ######fit together 把零散的东西拼凑成…; 组成一个整体; 装配; 连接;
 
+#### laptop 英[ˈlæptɒp] 美[ˈlæptɑ:p]
+
+n 便携式电脑;
+
+#### excerpt 英[ˈeksɜ:pt] 美[ˈeksɜ:rpt]
+
+n 摘录; 节录; 摘要; 引用;
+
+vt 摘录; 摘要; 引用; 节要;
+
+vi 摘录; 引用;
+
+#### stark 英[stɑ:k] 美[stɑ:rk]
+
+adj 完全的; 荒凉的; 光秃秃的; 僵硬的;
+
+adv 完全; 一丝不挂，赤裸; 明显地; 质朴地;
+
+###### in a stark contrast形成鲜明对比
+
+#### fictional 英[ˈfɪkʃənl] 美[ˈfɪkʃənl:]
+
+adj 虚构的; 小说的;
+
+#### brain 英[breɪn] 美[bren]
+
+n 脑; 智慧; 聪明的人; （群体中） 最聪明的人;
+
+vt 打破…的脑袋; 打…的头部;
+
+#### teaser 英[ˈti:zə(r)] 美[ˈtizɚ]
+
+n 戏弄者，喜欢戏弄别人的人; 棘手的问题;
+
+######brain teaser脑筋急转弯
+
+#### construct 英[kənˈstrʌkt] 美[kənˈstrʌkt]
+
+vt 构成; 修建，建造; 创立; [数] 作图;
+
+n 结构（物）; 构想; 概念;
+
 
 
 
