@@ -82,3 +82,7 @@ http://www.bejson.com/
 
 ####上网hosts
 http://www.uuhosts.com/     问题反馈邮箱liguidong94@gmail.com
+
+#### 蓝灯
+
+https://github.com/getlantern/forum/issues/833
