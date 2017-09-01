@@ -363,6 +363,114 @@ Spark session是spark编程下使用dataset和DataFrame API编程的进入点。
 
 ​	version: 1.6.1
 
+你能用Maven来创建项目，也可以使用Scala/Eclipse IDE添加Maven依赖到项目中。
+
+***注意***：Apache Maven是一个Java项目主要使用的自动化构建工具。单词maven在Yiddish语（犹太人主要用语）中意思是“知识积累”。Maven表现了构建软件的两个核心方面：第一，描述软件如何被构建，第二，描述了软件的依赖。
+
+你可以配置你的IDE做spark相关的事情。虽然一些Spark开发者在命令行下使用SBT和Maven，但最通用的IDE是IntelliJ IDEA，社区版本是免费的，你可以在上面安装JetBrains Scala插件。更多关于设置IntelliJIDEA或eclipse来使用spark的指导，请参考http://bit.ly/28RDPFy。
+
+######提交应用
+
+在Spark bin路径下的spark提交脚本，是提交spark应用到spark集群最常用的方法，可以在所有支持类型的集群上启动应用。你也需要将应用所有的依赖项目与应用一起打包，Java项目可以生成一个集成的JAR文件（aka uber/fat JAR），这样Spark就能在集群上分发。
+
+带依赖的spark应用可以使用bin/spark-submit脚本启动，该脚本仔细设置classpath以及它的依赖，并支持所有spark支持的集群管理器和部署模式。
+
+![spark_submission_template.png](attachments/spark_submission_template.png)
+
+对于Python应用：
+
+​	不需要\<application-jar\>，简单传递.py文件；
+
+​	添加Python的.zip、.egg和.py文件添加到搜索路径下，可以指定--py-files选项；
+
+
+
+####部署策略
+
+***Client方式***，常用于当你的应用靠近集群时。在这个模式下，驱动程序作为spark-submit进程的一部分被启动，对集群来说就是一个客户端，应用的输入输出通过console传递。这种模式适合于，当你的网关机器（？）与worker机器物理上集中时（？），也用于包括REPL的spark shell应用。这是默认的模式。
+
+***集群模式***：当你的应用是从远离worker机器的机器上提交时（例如，在你本地的笔记本），为了最小化驱动程序和executor之间的网络延迟，采用集群模式比较合适。当前仅YARN支持Python应用的集群化。<u>下面的表格所展示的集群管理器、部署管理器和使用在Spark2.0.0上并没有支持</u>：
+
+| 集群管理器      | 部署模式    | 应用类型          | 支持   |
+| ---------- | ------- | ------------- | ---- |
+| Mesos      | Cluster | R             | 否    |
+| Standalone | Cluster | Python        | 否    |
+| Standalone | Cluster | R             | 否    |
+| Local      | Cluster | -             | 不兼容  |
+| -          | Cluster | Spark-Shell   | 无应用  |
+|            | Cluster | Sql-Shell     | 无应用  |
+|            | Cluster | Thrift Server | 无应用  |
+
+
+
+#### 运行Spark例子
+
+Spark提供了打包的例子，涵盖Java、Python、Scala和R语言。我们将演示如何在样例目录下运行程序。
+
+由于之前我们只做了本地安装，所以接下来的例子Spark PI将会在本地4核上运行。这些例子可以在Apache Spark的Github页面http://bit.ly/28S1hDY上找到，我们截取样例一小段代码来解释SparkContext如何被初始化：
+
+​	val conf = new SparkConf().setAppName("Spark Pi")
+
+​	val spark = new SparkContext(conf)
+
+该例子与Spark的可执行包打包在一起，代码也可以从Github上下载到。仔细阅读这段代码，你将了解到我们自己的SparkContext对象是从SparkConf对象初始化而来。名称为“Spark PI”的应用在执行期间将会以运行中的应用出现在Spark UI中，这也可以帮助你追踪该job的状态。记住，这与spark-shell自动初始化SparkContext并传递它的一个引用形成鲜明对比。
+
+让我们用Spark submit脚本运行这个例子：
+
+![spark_pi_example_submits.png](attachments/spark_pi_example_submits.png)
+
+这个脚本的日志跨越多页，所以我们将跳过这些中间操作步骤，直接跳到输出打印的地方。记住这个例子中我们运行的是Spark Pi，它输出的是Pi值。这是日志的第二部分：
+
+![spark_pi_example_value_printed.png](attachments/spark_pi_example_value_printed.png)
+
+此时，我们看到的是Scala例子，如果我们用这个例子的python版本，你将看到我们将尽需要传递Python源码。由于不引用其它代码，我们不需要传递任何JAR文件（？Python）。类似于Scala例子，我们也需要直接初始化SparkContext，不像PySpark shell已经自动提供给你一个该context对象的引用：
+
+​	sc  = SparkContext(appName = "PythonPi")
+
+运行这个Spark Pi例子与Scala例子略有不同：
+
+![spark_pi_example_python_submit.png](attachments/spark_pi_example_python_submit.png)
+
+与PySpark例子相似（？应该是Scala的），这个SparkPi程序在spark-shell上的日志同样跨越多页。我们将直接跳到Pi值输出的地方：
+
+![spark_pi_example_python_value_printed.png](attachments/spark_pi_example_python_value_printed.png)
+
+#### 构建你自己的程序
+
+我们测试了预编译好的程序，但是如本章之前所讨论的，你能创建自己的应用程序，用sbt或Maven打包后，再调用spark-submit脚本运行。在本书后续的章节中，我们将同时使用REPL环境和spark-submit来执行多个代码例子。对于完整的代码例子，我们将在***第9章，构建推荐系统***中创建一个推荐系统，在***第10章 客户流失预估***中预估在电信环境下的客户流失。这两个例子（尽管是虚构的）将会帮助你理解一个机器学习应用的整个生命周期。
+
+#### 脑筋急转弯
+
+与Spark shell对应的端口4041而不是4040。
+
+我们已经运行了一个Scala shell，该shell在端口4040上创建Spark UI，Python Shell绑定UI到不同的端口，这个场景下是4041。（？这是脑筋急转弯还是转筋）
+
+#### 参考引用
+
+https://en.wikipedia.org/wiki/Apache_Mesos
+
+https://aws.amazon.com/ec2/
+
+http://spark/apache.org/docs/2.0.0-preview/quick-start.html
+
+http://spark.apache.org/docs/2.0.0-preview/cluster-overview.html
+
+http://spark.apache.org/docs/2.0.0-preview/submitting-applications.html
+
+https://en.wikipedia.org/wiki/Apache_Maven
+
+http://cdn2.hubspot.net/hubfs/438089/DataBricks_Surveys_-_Content/2016_Spark_Survey/2016_Spark_Infographic.pdf 
+
+####总结
+
+在本章中，我们给出了Spark架构的概览，编写第一个Spark应用，了解Spark的软件组件，并执行Spark应用。这为下一章讨论Spark RDD提供了坚实的基础，Spark RDD是Apache Spark最重要的构成之一。
+
+
+
+## 第2章 Spark RDD的transformation和action
+
+
+
 
 
 ## 第9章  构建一个推荐系统
