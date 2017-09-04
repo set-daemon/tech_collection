@@ -469,6 +469,78 @@ http://cdn2.hubspot.net/hubfs/438089/DataBricks_Surveys_-_Content/2016_Spark_Sur
 
 ## 第2章 Spark RDD的transformation和action
 
+现在我们已经对Spark的架构和关键软件组件的基本认识，本章将介绍Spark RDD。在本章的课程中，将逐一说明以下主题：
+
+​	如何构造RDD
+
+​	RDD的操作，例如transformation和action
+
+​	传递函数给Spark（Scala、Java和Python）
+
+​	transformation的具体方法map、filter、flatMap以及样例d	
+
+​	集合操作，例如distinct、intersection和union
+
+​	action的方法reduce、collect、count、take和first
+
+​	PairRDD
+
+​	共享及广播变量
+
+让我们开始cracking。
+
+#### 什么是RDD
+
+<u>在一个名字中有什么，对玫瑰来说是对的</u>，但对弹性分布式数据集（RDD）也许并不是这样，它本质上是在描述一个RDD是什么。
+
+它们是基本的数据集，跨集群分布的（记住Spark框架是继承自MPP架构），并天性上提供弹性（自动故障恢复）。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
