@@ -86,3 +86,64 @@ http://www.uuhosts.com/     问题反馈邮箱liguidong94@gmail.com
 #### 蓝灯
 
 https://github.com/getlantern/forum/issues/833
+
+#### 安卓模拟器
+
+参考知乎https://www.zhihu.com/question/24815978
+
+BlueStacks  http://www.bluestacks.hk/
+
+靠谱助手 
+
+夜神
+
+海马玩
+
+逍遥安卓
+
+天天模拟器
+
+猩猩助手
+
+#### iOS模拟器
+
+https://www.dreamytricks.net/ios-emulator-windows-run-ios-apps/
+
+http://www.ipadian.net/
+
+注意区分Emulator和Simulator，iOS的可能还不完善
+
+#### Android/iOS设备抓包
+
+http://www.telerik.com/fiddler本质上是一个代理服务器，很强悍，可以抓取android/ios设备的报文进行分析。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
