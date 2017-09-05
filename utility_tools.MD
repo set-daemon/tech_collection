@@ -117,7 +117,19 @@ http://www.ipadian.net/
 
 http://www.telerik.com/fiddler本质上是一个代理服务器，很强悍，可以抓取android/ios设备的报文进行分析。
 
+#### APK反编译
 
+参考http://blog.csdn.net/vipzjyno1/article/details/21039349/
+
+http://www.jianshu.com/p/eb766d2bb837
+
+https://www.52pojie.cn/forum-65-1.html
+
+apktool 下载https://bitbucket.org/iBotPeaches/apktool/downloads/
+
+dex2jar 下载https://bitbucket.org/pxb1988/dex2jar
+
+JD-GUI 下载http://jd.benow.ca/
 
 
 
