@@ -133,6 +133,26 @@ JD-GUI 下载http://jd.benow.ca/
 
 
 
+#### R-Studio
+
+R开发的IDE。集成了大量工具，现在也支持C/S架构服务，即R-Studio Server和R-Studio Client。
+
+#### Anaconda
+
+Python科学计算环境。
+
+
+
+#### appium
+
+官网：http://appium.io/
+
+自动化移动测试框架。
+
+#### selenium
+
+自动化测试工具。
+
 
 
 
