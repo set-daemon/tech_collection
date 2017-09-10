@@ -82,6 +82,7 @@ http://www.bejson.com/
 
 ####上网hosts
 http://www.uuhosts.com/     问题反馈邮箱liguidong94@gmail.com
+https://github.com/racaljk/hosts
 
 #### 蓝灯
 
