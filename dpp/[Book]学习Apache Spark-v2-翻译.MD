@@ -487,13 +487,277 @@ http://cdn2.hubspot.net/hubfs/438089/DataBricks_Surveys_-_Content/2016_Spark_Sur
 
 ​	共享及广播变量
 
-让我们开始cracking。
+让我们开始破解其中的奥秘。
 
 #### 什么是RDD
 
 <u>在一个名字中有什么，对玫瑰来说是对的</u>，但对弹性分布式数据集（RDD）也许并不是这样，它本质上是在描述一个RDD是什么。
 
 它们是基本的数据集，跨集群分布的（记住Spark框架是继承自MPP架构），并天性上提供弹性（自动故障恢复）。
+
+在我们讨论更更多细节之前，让我们试着对此理解更多一些，也再试着尽可能抽象些。我们假设你拥有来自飞行器传感器的传感数据，且只想分析数据而不用管数据大小和位置。例如，空客A350整机大约有6000个传感器，每天产生2.5TB，而预期在2020投产的更新型号每天将产生7.5TB数据。从数据工程的角度，理解数据管道会更重要，而从分析师和数据科学家的角度，更主要关注的是分析数据而不用理会数据大小以及数据存储的跨节点个数。这就是RDD概念以及对整个数据集上执行的transformation/action产生的纯粹缘由。A350六个月有价值的数据集大约有450TB数据，将需要跨越多台机器存储。
+
+为便于讨论，我们假设你工作在4个worker机器的集群上，你的数据也将像下面一样在这些worker上分区：
+
+![RDD_split_across_a_cluster.png](attachments/RDD_split_across_a_cluster.png)
+
+这个图基本解释了一个RDD是数据的分布式集合，框架将数据跨集群分发。跨机器集的数据分布带来了包括要从节点失败恢复的干扰。RDD由于能从RDD关系图中重新计算而具有弹性，这种图是当前RDD的整个父RDD的图。除了弹性、分布式以及表达一个数据集，一个RDD还有多种其它的与众不同的品质：
+
+​	内存型：一个RDD是对象常驻于内存的集合。我们将看到一些可选项，使得RDD可以存储在内存、磁盘或者两者。然而，Spark的执行速度来源于一个事实，数据存放在内存中，而不是每次操作都从磁盘获取。
+
+​	分区：分区是将逻辑数据集或组成的元素划分为独立部分。分区是分布式系统一个事实上的性能优化技术，用于最小化网络带宽消耗，去除这个高性能工作的”杀手“。面向数据key-value的分区的目的是放置相似的key区间，起到了最小化shuffling的作用。在RDD内的数据被分割到分区上，并且跨集群多个节点。我们将在本章后面的内容给出更多细节来进行讨论。
+
+​	类型：在RDD中的数据是强类型的。当你创建了一个RDD，所有的元素类型由数据类型决定。
+
+​	延迟执行：在spark上，transformation操作是延迟的，这意味着只有当你执行一个action时才会在RDD中产生数据。然而，你可以在任何时候对RDD使用一个count() action来生成可用数据。我们将讨论该特性及其相关的好处。
+
+​	不可变：RDD一旦创建即不能修改。当然，可以执行一系列的transfromation操作来将其转换成一个新的RDD。
+
+​	并行：RDD的操作是并行化的。由于数据会被传播到集群的不同分区，每个分区都能并行操作。
+
+​	缓存：由于RDD是延迟执行的，在RDD上的任何action都会导致执行所有的transformation以此来创建该RDD。通常这对于大数据集不是很好的行为（注：每个action都会对已经执行过的关系图再执行），因此spark提供可选项来缓存数据到内存或磁盘。我们将在本章讨论缓存的细节。
+
+一个典型的带RDD的spark程序流程包括：
+
+​	1 从数据源创建RDD
+
+​	2 一系列的transformation，例如，filter、map、join等等
+
+​	3 持久化RDD以防止再执行
+
+​	4 对RDD调用action开始在集群上执行并行操作
+
+下图描述了以上的流程：
+
+![typical_spark_rdd_flow.png](attachments/typical_spark_rdd_flow.png)
+
+让我们快速查看可以创建RDD的不同方法。
+
+#### 构造RDD
+
+创建RDD有两种主要的方法：
+
+​	在驱动程序中并行化一个已经存在的集合；
+
+​	通过引用外部数据源来创建RDD，例如，文件系统、HDFS、HBASE，或者可以支持Hadoop输入格式的任何数据源
+
+###### 并行化已存在的集合
+
+并行化的集合是通过在驱动程序内的SparkContext上调用方法paralleize()产生的。这个parallelize()方法要求Spark基于给定的数据集创建一个新的RDD。一旦本地的集合/数据集转换成了RDD，那它就可以被并行化操作。parallelize()通常用于构建原型，而少用于产品环境，由于这个数据仅在单机上能获取到。让我们看分别用Scala、Python和Java将集合并行化的例子：
+
+![parallelize_a_collection_of_names_Scala.png](attachments/parallelize_a_collection_of_names_Scala.png)
+
+用Python并行化集合与Scala非常相似，如下例子所示：
+
+![parallelize_a_collection_of_names_Python.png](attachments/parallelize_a_collection_of_names_Python.png)
+
+用Java也是一样的（注：本处可能有问题）：
+
+​	textFile = sc.textFile("README.md")  //读取README.MD文件内容来创建一个名为textFile的RDD
+
+该parallelize方法有很多变种，包括设定数值区间的一个选项，例如：
+
+![parallize_a_range_of_integers_Scala.png](attachments/parallize_a_range_of_integers_Scala.png)
+
+与Scala稍有差异的是，Python要用range()方法。结尾的值是不包括的，因此，你可以看到与Scala例子不同的地方，结尾值是366而不是365:
+
+![parallize_a_range_of_integers_Python.png](attachments/parallize_a_range_of_integers_Python.png)
+
+python提供的xrange函数也可以使用，与range相似，但执行更快，因为与在内存中创建列表的range()比较，它本质上是一个延迟执行的序列对象。
+
+现在RDD已经创建完毕，它可以被并行化操作。你可以传递第二个参数给方法parallelize()，用于指示数据将要被分片的分区个数，作为一种深入优化的手段。spark将为集群的每个分区运行一个任务：
+
+![parallelize_arange_integers_slice_partition_scala.png](attachments/parallelize_arange_integers_slice_partition_scala.png)
+
+Python对这个的处理语法看起来与Scala差不多。例如，如果你想要对一个范围内的整数分割到4个分区做并行化，你可以像这样：
+
+![parallelize_arange_integers_slice_partition_python.png](attachments/parallelize_arange_integers_slice_partition_python.png)
+
+#### 引用外部数据源
+
+你已经用parallelize方法创建了Spark的RDD对象，这主要用于构建原型。在产品使用中，spark可以从由Hadoop支持的任何存储源中加载数据，这些源包括本地文件系统的文本文件，以及HDFS、HBASE或Amazon S3上的数据。
+
+如我们在前面例子看到的，你可以用textFile方法从本地文件系统中加载一个文本文件，其它可用的方法有：
+
+​	hadoopFile()：从一个任意输入格式的Hadoop文件创建RDD
+
+​	objectFile()：从一个保存为包含序列化对象的SequenceFile载入RDD，这种对象是有一个序列化分区的NullWritable key和BytesWritable值（？）
+
+​	textFile()：这个方法之前已经见识过了，可以从HDFS或本地文件系统上读入文本文件，并返回字符串类型的RDD
+
+***注意***：你可能想访问Spark的上下文API文档（http://bit.ly/SparkContextScalaAPI）来了解这些方法的细节，其中有些可能被重载过并允许你传递某些参数来加载多种文件类型。
+
+一旦RDD创建完后，你可以对该RDD实施transformation或action的并行化操作。
+
+***注意***：当从本地文件系统加载文件时，确保这个文件路径存在于所有的worker节点上。你也可能想使用网络挂载的共享文件系统。
+
+Spark的textFile()方法提供了一些最为可贵的多种有用特性，扫描目录的能力，操作压缩文件以及使用通配符。那些工作在产品系统和机器日志的人将会欣赏这种特性的好处。
+
+例如，在你的Spark文件夹里有两个.md文件，而同时我们已经在之前加载了README.md，让我们使用通配符来读取所有.md文件，并尝试其它的选项：
+
+![different_uses_textFile_method_Scala.png](attachments/different_uses_textFile_method_Scala.png)
+
+用Python加载文本文件有非常相似的更熟悉的语法。你将依然在Spark上下文调用textFile()方法，然后用该RDD来做其它操作，例如transformation和action：
+
+![different_uses_textFile_method_Python.png](attachments/different_uses_textFile_method_Python.png)
+
+相似地，对于Java，相关的代码例子将会像如下：
+
+​	//读取在目录下的所有md文件
+
+​	JavaRDD\<String\> dataFiles = sc.textFile("*.md");
+
+​	// 读取README.md文件
+
+​	JavaRDD\<String\> readmeFile  = sc.textFile("README.md");
+
+​	// 读取所有的CONTRIBUTIONS.md文件
+
+​	JavaRDD\<String\> contributions = sc.textFile("CONT*.md");
+
+到目前位置我们仅仅在本地文件系统下做了尝试，那么从HDFS或S3之类的文件系统上读取一个文件将会有多大不同呢？让我们快速看看通过Spark可用的不同选项。
+
+***注意***：我期望大多数读者已经熟悉HDFS和HADOOP，以及如何将数据上传到Hadoop。如果你依然没有开始你的Hadoop之旅，你也许需要看一看下面的Hadoop快速启动指导：http://bit.ly/HadoopQuickstart。
+
+我们现在已经有数据被上传到HDFS。数据在目录/spark/sample/telcom下可以获取到。这儿有一些呼叫详情记录（CDRs）样本数据，被创建用于本练习。你将在本书的GitHub页面上找到样本数据：
+
+​	//上传数据到Hadoop集群
+
+​	hadoop fs -copyFromLocal /spark/data/ /spark/sample/telecom/
+
+​	// 从Scala-Shell访问HDFS数据
+
+​	val dataFile = sc.textFile("hdfs:///yournamenode:8020/spark/sample/telecom/2016*.csv")
+
+​	// 从Python shell访问HDFS数据
+
+​	dataFile = sc.textFile("hdfs:///yournamenode:8020/spark/sample/telecom/2016*.csv")
+
+你也可以用非常相似的方法访问Amazon s3。
+
+现在我们已经了解了RDD创建过程，让我们快速浏览可以在RDD执行的操作类型。
+
+#### RDD操作
+
+可在RDD上执行的两类主要的操作类型，它们被称为：
+
+​	transformation
+
+​	action
+
+###### transformation
+
+transformation是创建新数据集的操作，原因是RDD是不可修改的。他们用于将一个数据转换到另一个，这可能会导致数据放大、数据减小或完全不同的样子。这些操作并不返回任何值到驱动程序，因此是延迟执行的，这也是spark的主要优势之一。
+
+transformation的一个例子可以是一个map函数，将遍历RDD的每个元素，返回一个全新的RDD，代表在原始数据集上的函数应用结果。
+
+###### action
+
+action是向驱动程序返回值的操作。如之前讨论的，在Spark上所有的transformation是延迟的，这本质上意味着Spark记得在一个RDD上所有的transformation，并且，当一个action被调用时，将会用最优化的方式来应用他们。例如，你可能有1TB的数据集，你将它传递给一系列map函数用于多种transformation。最终，你在数据集上执行了reduce action。Apache Spark将仅会返回一个最终的数据集，其大小可能是数十兆，而不是映射的中间结果的整个1TB数据集。
+
+然而，你应该记得要保留中间结果，否则，Spark将在每个action每次调用时会重新计算整个RDD，在RDD上的persist()方法将帮助你防止重计算并保存中间结果。我们之后将对此给出更多的细节。
+
+让我们通过一个简单的例子来展示transformation和action的作用。在这个具体的例子中，我们将使用flatmap() transformation和一个count action，使用本地文件系统的README.md文件作为例子。我们将解释Scala例子的每一行，然后再给出Python和Java的代码。通常，你必须用自己的文本片段试试这个例子，并探查该结果：
+
+​	// 加载README.md文件
+
+​	val dataFile = sc.textFile("file:///home/sysop/spark/README.md")
+
+现在数据已经加载，我们将需要运行一个transformation。因为我们知道文本的每一行将会被加载成一个单独的元素，我们将需要运行一个flatMap transformation，并将单个单词分离出来作为一个单独的元素，对于这个要求，我们将调用split函数并使用空格作为分隔符：
+
+​	// 将每个RDD元素分离出一个单词列表
+
+​	val words = dataFile.flatMap(line => line.split(" "))
+
+记住，直到这里，你似乎已经运用了一个transformation函数，什么都没有执行，所有的transformation已添加到逻辑计划中。同样要注意这个transformation返回了一个新的RDD，然后我们可以在这个词RDD调用count() action执行计算，这将导致在运用具体的transformation函数之前，从文件获取数据并产生一个RDD。你可能注意到了我们实际上传递一个函数给Spark，这是在本章的后续章节***向Spark传递函数***所覆盖的领域。现在我们有了RDD的另一个RDD，并对该RDD调用count()来获得RDD的元素总数：
+
+​	words.count()
+
+调用count() action时，该RDD即被执行，其结果将被发送回驱动程序。这对于大数据应用是非常灵巧和特别有用的。
+
+如果你是Python精通者，你也许想要在PySpark中执行以下代码。你应该注意到lambda函数被传递给Spark框架：
+
+​	// 加载数据文件，运用transformation和action
+
+​	dataFile = sc.textFile("file:///home/sysop/spark/README.md")
+
+​	words = dataFile.flatMap(lambda line: line.split(" "))
+
+​	words.count()
+
+用Java编写相同的功能也是很直观的，并且看起来与Scala很相似：
+
+​	JavaRDD\<String\> lines = sc.textFile("file:///home/sysop/spark/README.md");
+
+​	JavaRDD\<String\> words = lines.map(line -> line.split(" "));
+
+​	int wordCount = words.count();
+
+这也许看起来是一个简单程序，但在场景后面的（behind the scenes）使用了line.split(" ")函数并将其并行地运用到集群里的所有分区。这个框架提供了这种简单性，并在背后完成了集群上的协调调度工作，返回结果。
+
+#### 传递函数到Spark（Scala）
+
+在前面例子你已经看到，传递函数是Spark提供的关键功能。从用户的观点，你可以传递函数给驱动程序，Spark将会指出集群内存的数据分区位置，并行化执行该函数。传递函数的确切语法在不同编程语言里是不同的，由于Spark由Scala编写，我们将首先讨论Scala。
+
+在Scala中，传递函数到Spark框架的推荐方法如下：
+
+​	匿名函数
+
+​	静态单例方法
+
+###### 匿名函数
+
+匿名函数用于简短的代码片段。他们也作为lambda表达式被引用，是编程语言一种很酷且简洁优美的特性。他们被称为匿名函数的原因是你能给输入参数任何名字，而结果都是一样的。
+
+例如，下面的代码例子将会产生相同的输出：
+
+​	val words = dataFile.flatMap(line => line.split(" "))
+
+​	val words = dataFile.flatMap(anyline => anyline.split(" "))
+
+​	val words = dataFile.flatMap(_.split(" "))
+
+![passing_anonymous_function_to_spark_Scala.png](attachments/passing_anonymous_function_to_spark_Scala.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
