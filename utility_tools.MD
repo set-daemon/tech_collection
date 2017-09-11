@@ -106,6 +106,8 @@ BlueStacks  http://www.bluestacks.hk/
 
 猩猩助手
 
+genymotion https://www.genymotion.com/   可以加载各种虚拟设备
+
 #### iOS模拟器
 
 https://www.dreamytricks.net/ios-emulator-windows-run-ios-apps/
