@@ -719,29 +719,159 @@ action是向驱动程序返回值的操作。如之前讨论的，在Spark上所
 
 ![passing_anonymous_function_to_spark_Scala.png](attachments/passing_anonymous_function_to_spark_Scala.png)
 
+###### 静态单例函数
 
+虽然匿名函数对代码短片段确实很有帮助，但当你想要向spark框架请求复杂的数据控制时则无能为力，而这能被静态单例函数自有的细微差别解救，我们将在这一节讨论这个。
 
+***注意***，在软件工程中，***单例模式***是一种设计模式，用于限制一个类实例化到一个对象，当在系统上协调action时就完全需要有这样一个对象，这时单例模式是非常有用的。静态方法属于这个类，但不是它的一个实例。他们通常从参数获取输入，执行动作，最后返回结果。
 
+![passing_static_singleton_function_to_spark_Scala.png](attachments/passing_static_singleton_function_to_spark_Scala.png)
 
+静态单例是传递函数的常用方法，技术上就像你创建了一个类，在该类实例上调用一个方法，例如：
 
+​	class UtilFunctions {
 
+​		def split(inputParam: String): Array[String] = {inputParam.split(" ")}
 
+​		def operate(rdd: RDD[String]): RDD[String] = {rdd.map(split)}
 
+​	}
 
+你可以发送一个类中的方法，但这样会有性能隐患，毕竟整个对象会随着方法被发送。
 
+###### 向Spark传递函数（Java）
 
+在Java中，为了创建一个函数，你需要实现在org.apache.spark.api.java函数包中的接口，这儿有两种常用的方法来创建这种函数：
 
+​	在你自己的类中实现接口，并传送实例给Spark。
 
+​	从Java 8开始，你能用Lambda表达式来传送函数给Spark框架。
 
+让我们用Java实现之前的词统计例子：
 
+​	@SuppressWarnings("serial")
 
+​	JavaRDD<Integer> numWordsPerLine = dataFile.map(new Function\<String,Integer\>(){
 
+​		public Integer call(String s) {
 
+​			return s.split(" ").length;
 
+​		}
 
+​	});
 
+​	@SuppressWarnings("serial")
 
+​	int totalWords = numWordsPerLine.reduce(new Function2\<Integer, Integer, Integer\>(){
 
+​		public Integer call(Integer len1, Integer len2) throws Exception {
+
+​			return len1 + len2;
+
+​		}
+
+​	});
+
+​	System.out.println("Total number of Words: " + totalWords);
+
+如果你是那种感觉编写inline函数会让代码变得复杂和不可接受的程序员（很多人同意这个论断），你也许想要创建单独的函数并如下调用它们：
+
+​	@SuppressWarnings("serial")
+
+​	class GetNumWords implements Function\<String,Integer\> {
+
+​		public Integer call(String s) {
+
+​			return s.split(" ").length;
+
+​		}
+
+​	}
+
+​	@SuppressWarnings("serial")
+
+​	class SumWords implements Function2\<Integer, Integer, Integer\> {
+
+​		public Integer call(Integer len1, Integer len2) {
+
+​			return len1 + len2;
+
+​		}
+
+​	}
+
+​	public void totalWords(JavaSparkContext sc, String fileName) {
+
+​		JavaRDD\<String\> distFile = sc.textFile(fileName, 4);
+
+​		JavaRDD\<Integer\> numWords = distFile.map(new GetNumWords());
+
+​		int totalWords = numWords.reduce(new SumWords());
+
+​		System.out.println("Total number of Words: " + totalWords);
+
+​	}
+
+###### 向Spark传递函数（Python）
+
+Python提供了向Spark传递函数的简单方法，Spark编程指导（在spark.apache.org上获取到）建议可以用三种推荐方法来实现：
+
+​	Lambda表达式是一种对于内部只有一个简单表达式的短函数非常奏效；
+
+​	在函数里的本地defs，向Spark调用更长代码（？）
+
+​	在一个模块中的顶级函数
+
+由于我们已经在之前的例子中看到过一些lambda函数的使用例子，现在让我们看看这些函数的本地定义，下面会展示如何将词的划分和统计封装成两个单独的函数。
+
+​	def splitter(lineOfText):
+
+​		words = lineOfText.split(" ")
+
+​		return len(words)
+
+​	def aggregate(numWordsLine1, numWordsLineNext):
+
+​		totalWords = numWordsLine1 + numWordsLineNext
+
+​		return totalWords
+
+![code_example_word_count_Python.png](attachments/code_example_word_count_Python.png)
+
+这儿还有另外一种实现该功能的方法，定义函数作为UtilFunctions类的一部分，然后在map和reduce函数中引用它们：
+
+![code_example_word_count_UtilityClass_Python.png](attachments/code_example_word_count_UtilityClass_Python.png)
+
+你也许想变得更大胆一些，并试图添加一个countWords()方法到UtilFunctions，这样它能接受RDD作为输入，并返回词总数。这种方法有潜在的性能隐患，因为整个对象将要被发送到这个集群。让我们看看如何实现这个需求，在下面截屏中可以看到结果：
+
+![code_example_word_count_UtilityClass2_Python.png](attachments/code_example_word_count_UtilityClass2_Python.png)
+
+这可以通过生成本地对象的引用数据域的一份拷贝来防止，而不是直接外部访问它。（？）
+
+现在我们已经掌握了如何向Spark传递函数，也在前面的例子中了解了一些transformation和action，包括map、flatMap和reduce，我们将要查看在Spark中更通常使用的transformation和action，下面的列表并不详尽，你可以在Apache Spark文档的编程指导章节(http://bit.ly/SparkProgrammingGuide)中找到更多的例子。如果你想要获取所有可用函数的更全面列表，你可以查看以下API文档：
+
+|        | RDD                   | PairRDD               |
+| ------ | --------------------- | --------------------- |
+| Scala  | http://bit.ly/2bfyoTo | http://bit.ly/2bfzgah |
+| Python | http://bit.ly/2bfyURl | N/A                   |
+| Java   | http://bit.ly/2bfyRov | http://bit.ly/2bfyOsH |
+| R      | http://bit.ly/2bfyrOZ | N/A                   |
+
+#### Transformations
+
+在本章中我们在例子中使用了少量的transformation函数，但我想要与你分享在Apache Spark中最常用的transformation函数列表。你可以在官方文档中找到完整的函数列表：http://bit.ly/RDDTransformations。
+
+| 最常用的transformation                      |                                          |
+| --------------------------------------- | ---------------------------------------- |
+| map(func)                               | coalesce(numPartitions)                  |
+| filter(func)                            | repartition(numPartitions)               |
+| flatMap(func)                           | repartitionAndSortWithinPartitions(partitioner) |
+| mapPartitions(func)                     | join(otherDataset, [numTasks])           |
+| mapPartitionsWithIndex(func)            | cogroup(otherDataset, [numTasks])        |
+| sample(withReplacement, fraction, seed) | cartesian(otherDataset)                  |
+
+###### map(func)
 
 
 
