@@ -84,6 +84,8 @@ http://www.bejson.com/
 http://www.uuhosts.com/     问题反馈邮箱liguidong94@gmail.com
 https://github.com/racaljk/hosts
 
+https://laod.cn/hosts/
+
 #### 蓝灯
 
 https://github.com/getlantern/forum/issues/833
