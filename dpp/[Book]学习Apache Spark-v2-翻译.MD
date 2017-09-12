@@ -873,35 +873,81 @@ Python提供了向Spark传递函数的简单方法，Spark编程指导（在spar
 
 ###### map(func)
 
+这个map transformation是最常用的、最简单的RDD transformation，它将在参数中传递的函数应用到源RDD的每个元素上。在前面的例子，我们已看到map() transformation的用法，即将split()函数传递给输入RDD。
 
+![operation_of_a_map_function.png](attachments/operation_of_a_map_function.png)
 
+我们再也不会给出像之前看到的大量的map函数i使用例子。
 
+让我们看看filter() transformation，这个也是最常用transformation函数之一，特别是在日志分析时。
 
+###### filter(func)
 
+Filter，正如其名所暗示的，过滤输入RDD，并按照满足传递参数的预期创建一个新的数据集。
 
+例子2.1:Scala过滤例子：
 
+​	val dataFile = sc.textFile("file:///home/daemonor/installed_service/spark/README.md")
 
+​	val linesWithApache = dataFile.filter(line => line.contains("Apache"))
 
+例子2.2：Python过滤例子：
 
+​	dataFile = sc.textFile("file:///home/daemonor/installed_service/spark/README.md")
 
+​	linesWithApache = dataFile.filter(lambda line: "Apache" in line)
 
+例子2.3：Java过滤例子：
 
+​	JavaRDD\<String\> dataFile = sc.textFile("file:///home/daemonor/installed_service/spark/README.md")
 
+​	JavaRDD\<String\> linesWithApache = dataFile.filter(line -> line.contains("Apache"))
 
+###### flatMap(func)
 
+flatMap() transformation与map相似，但提供了更多的灵活性，从相似于map函数的观点，它操作RDD的所有元素，但这种灵活性源自于处理函数的能力，即返回一个序列而非一个单个项。你在之前的例子也看到了，我们使用flatMap()来平铺split(" ")函数的结果，它返回的是一个平铺的结构而不是一个string数组类型的RDD。
 
+![operational_details_of_the_flatMap_transformation.png](attachments/operational_details_of_the_flatMap_transformation.png)
 
+让我们看一看Scala的flatMap例子。
 
+下面的例子展示了你如何用Scala的flatmap()方法将一个列表（在本例中是电影）平铺。
 
+例子2.4:Scala的flatmap()例子
 
+​	val favMovies = sc.parallelize(List("Pulp Fiction", "Requiem for a dream", "A clockwork Orange"));
 
+​	favMovies.flatMap(movieTitle => movieTitle.split(" ")).collect()
 
+下面Python的flatmap()例子达到了与例子2.4相似的目标，且该例子的语法与Scala例子看起来很相似（罗嗦。。。）。
 
+例子2.5:Python的flatmap()例子：
 
+​	movies = sc.parallelize(["Pulp Fiction", "Requiem for a dream", "A clockwork Orange"])
 
+​	movies.flatMap(lambda movieTitle: movieTitle.split(" ")).collect()
 
+如果你是一个Java粉丝，你可以用下面的Java代码例子来实现电影列表的平铺，用Java实现相同的例子显得有点罗嗦，但它本质上生成了相同的结果。
 
+例子2.6:Java的flatmap()例子：
 
+​	JavaRDD\<String\>  movies = sc.parallelize(Arrays.asList("Pulp Fiction", "Requiem for a dream", "A clockwork Orange"));
+
+​	JavaRDD\<String\> movieName = movies.flatMap(
+
+​		new FlatMapFunction\<String,String\>() {
+
+​			public Iterator\<String\>  call(String movie) {
+
+​				return Arrays.asList(movie.split(" ")).iterator;
+
+​			}
+
+​		}
+
+​	);
+
+###### Sample(withReplacement, fraction, seed)
 
 
 
