@@ -949,33 +949,143 @@ flatMap() transformation与map相似，但提供了更多的灵活性，从相�
 
 ###### Sample(withReplacement, fraction, seed)
 
+采样是任意数据分析的一个重要组件，并会对你的结果/发现的质量会产生很大的影响。如果你期望在全数据集运行前先采样一部分数据快速测试你的假设，Spark为你的计算提供了RDD采样的便捷方法。我们将在机器学习章节讨论更多有关采样的问题，但这里会先对传递给该方法的参数做一个快速浏览：
+
+​	withReplacement：是一个布尔类型（True/False），指示元素是否可以多次采样（当被采样出来后再放回）。放回式采样意味着两个采样值是独立的。在实际的术语中这意味着，如果我们放回式抽取两个样本，我们在第一个上得到的不会影响第二个抽取的，因此这两个样本的协方差是0。如果我们非放回式采样，这两个样本将不会是独立的。实践中，这意味着我们在第一个抽取的会影响第二个的采样，因此这二者的协方差不为0。
+
+​	fraction：指示样本期望的大小是RDD大小的一部分，该值必须位于0到1。例如，如果你抽取5%样本，你可以选择0.05作为fraction。
+
+​	seed：该参数用于随机数产生器。（注：如果前面两个参数不变，且该参数也不变，则多次调用的结果一致）
+
+首先看一个Scala的采样例子。
+
+例子2.7:Scala的sample()例子：
+
+​	val data = sc.parallelize(List(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20));
+
+​	data.sample(true, 0.1, 12345).collect();
+
+Python的采样例子看起来与Scala相似。
+
+例子2.8:Python的sample()例子：
+
+​	data = sc.parallelize([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+
+​	data.sample(True, 0.1, 12345).collect()
+
+在Java中，采样例子返回的是一个整数RDD。
+
+例子2.9:Java的sample()例子：
+
+​	JavaRDD\<Integer\> nums = sc.parallelize(Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20));
+
+​	nums.sample(true, 0.1, 12345).collect();
+
+#### Spark的集合操作
+
+对于来自数据库世界和已经探索过大数据世界的读者，你可能在寻找如何在Spark数据集上运用集合操作。你可能已经意识到RDD能够表示任意种类的数据，但是它并没有必要表示成一个基于集合的数据。在数据库世界中典型的集合操作包括以下操作，并且我们将看到它们如何运用到Spark。然而，要特别记住虽然Spark提供了一些方法来模仿这些操作，但Spark不允许你在这些条件下运用这些操作，而这在SQL操作是很常见的(?)：
+
+​	***Distinct***：该操作为你提供了从数据集中产生的非重复数据集。
+
+​	***Intersection***：该操作返回那些存在于两个数据集的元素。
+
+​	***Union***：该操作返回两个数据集中的元素。
+
+​	***Substract***：该操作返回从第一个数据集中去除第二个数据集中匹配第一个数据集的元素的剩余元素。
+
+​	***Cartesian***：两个数据集的笛卡尔积。
+
+###### distinct()
+
+在数据管理和分析时，工作在一个有区别无重复的数据集合通常非常重要。Spark提供了用可取的transformation操作实现从数据集抽取出有区别的值的能力（？）。让我们看看Scala、Python和Java收集有区别元素的方式。
+
+例子2.10：Scala的distinct：
+
+​	val movieList = sc.parallelize(List("A Nous Liberte", "Airplane", "The Apartment", "The Apartment"));
+
+​	moviesList.distinct().collect();
+
+例子2.11：Python的distinct：
+
+​	moviesList = sc.parallelize(["A Nous Liberte", "Airplane", "The Apartment", "The Apartment"])
+
+​	moviesList.distinct().collect()
+
+例子2.12：Java的distinct：
+
+​	JavaRDD\<String\> moviesList = sc.parallelize(Arrays.asList("A Nous Liberte", "Airplane", "The Apartment", "The Apartment"));
+
+​	moviesList.distinct().collect();
+
+###### intersection()
+
+intersection与内联操作很相似，但警告是它并不支持joining的标准。intersection在两个RDD里寻找元素，返回同时存在于两个数据集的元素。例如，你可能基于技能集划分出候选人：
+
+​	java_skills = "Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"
+
+​	db_skills = "James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"
+
+​	java_and_db_skills = java_skills.intersection(db_skills)
 
 
 
+![intersection_operation.png](attachments/intersection_operation.png)
 
+接下来展示几个用Scala、Python和Java实现的两个数据集的intersection例子。
 
+例子2.13:Scala的intersection：
 
+​	val java_skills = sc.parallelize(List("Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"));
 
+​	val db_skills = sc.parallelize(List("James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"));
 
+​	java_skills.intersection(db_skills).collect();
 
+例子2.14：Python的intersection：
 
+​	java_skills = sc.parallelize(["Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"])
 
+​	db_skills = sc.parallelize(["James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"])
 
+​	java_skills.intersection(db_skills).collect()
 
+例子2.15：Java的intersection：
 
+​	JavaRDD\<String\> java_skills = sc.parallelize(Arrays.asList("Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"));
 
+​	JavaRDD\<String\> db_skills = sc.parallelize(Arrays.asList("James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"));
 
+​	java_skills.intersection(db_skills).collect();
 
+###### union()
 
+union是两个数据集的基本聚合。如果部分元素同时存在于两个数据集，他们将会重复。如果使用前面例子的数据，你将得到Tom Mahoney和Paul Jones这两个人同时拥有Java和DB技能，对这两个数据集的union操作会产生他们的两个入口。本案例中我们将只会查看Scala例子。
 
+例子2.16:Scala的union：
 
+​	val java_skills = sc.parallelize(List("Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"));
 
+​	val db_skills = sc.parallelize(List("James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"));
 
+​	java_skills.union(db_skills).collect();
 
+![uion_operation.png](attachments/uion_operation.png)
 
+###### substract()
 
+substraction，如名所指，将一个数据集的元素从另一个中删除，这非常适于ETL处理连续时间段产生的新数据，且确保在整合前标识出新的数据项，下面快速浏览Scala例子，并查看操作的结果。
 
+例子2.17：Scala的substract()
 
+​	val java_skills = sc.parallelize(List("Tom Mahoney", "Alicia Whitekar", "Paul Jones", "Rodney Marsh"));
+
+​	val db_skills = sc.parallelize(List("James Kent", "Paul Jones", "Tom Mahoney", "Adam Waugh"));
+
+​	java_skills.substract(db_skills).collect();
+
+结果是：Alicia Whitekar, Rodney Marsh。
+
+###### cartesian()
 
 
 
