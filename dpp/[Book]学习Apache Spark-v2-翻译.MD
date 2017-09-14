@@ -1087,9 +1087,111 @@ substraction，如名所指，将一个数据集的元素从另一个中删除�
 
 ###### cartesian()
 
+cartesian模拟了SQL系统的交叉连接，给出两个数据集的元素之间所有可能组合。例如，你可能有一年的12个月，总共5年，且想在所有可能的日期上执行一个特别操作。这就是你在Spark中如何用cartesian() transformation来产生数据（？）。
 
+![cartesian_product_Scala.png](attachments/cartesian_product_Scala.png)
 
+***注意***：为了简便，我们将不给出Python和Java的例子，但你能在本书的GitHub页面上找到它们。
 
+#### Actions
+
+前面已经讨论过，action会让Spark按你忙于执行transformation的同时由框架在后台创建的图执行真实的计算。由于Spark提供了一长列的action，我们只会列出由Spark提供的最常用action，并带你浏览其中某些action：
+
+| reduce(func)                             | takeOrdered(n, [ordering]) |
+| ---------------------------------------- | -------------------------- |
+| collect()                                | saveAsTextFile(path)       |
+| count()                                  | saveAsSequenceFile(path)*  |
+| first()                                  | saveAsObjectFile(path)*    |
+| take(n)                                  | foreach(func)              |
+| takeSample(withReplacement, num, [seed]) |                            |
+
+***注意***：方法saveAsSequenceFile()和saveAsObjectFile()仅在Java和Scala中可用。
+
+我们在之前的例子中已经看到过reduce()、collect()和count()，所以我们将快速过它们的语义，但为了简便性而不会提供相关的例子。
+
+###### reduce(func)
+
+顾名思义，reduce对输入数据集执行聚合操作，该数据集通常是map函数调用的结果。你可以传递函数给reduce action，但前提是该函数是可交换(commutative)和关联的（associative？），以便并行执行。
+
+***注意***：这个词commutative来源于commute或move around，所以commutative属性即指代移动周围的东西。对于加法，该规则是a+b=b+a；用数字表示，这意味着2+3=3+2。对于乘法，该规则是ab=ba;用数字可表示为2x3=3x2。
+
+这个词associative来源于associate或group;associative属性指的是按组的规则。对于加法，规则是a+(b+c) = (a+b) +c;用数字可表示为2+(3+4)=(2+3)+4。对于乘法，规则是a(bc)=(ab)c;用数字可表示为2(3x4)=(2x3)4。
+
+在以前的例子，我们已经看到如何从flatmap函数的输出中得到词统计。
+
+###### collect()
+
+collect将返回调用它的RDD的内容给驱动程序。通常这是你已经执行过transformation和filter这类操作产生的输出数据子集，例如map()和filter()。有一些在使用collect()需要注意的地方，在调用前你应该知道的：
+
+​	通常用于单元测试，在产品环境中你应该使用SaveAsXXXFile方法来存储结果，并由下游处理接管。
+
+​	RDD的整个内容将会发送回驱动程序，这也意味着它应该与单机上的内存匹配。不要在大的数据集上调用collect()，否则你的客户端会crash掉。
+
+​	由于RDD在多个节点上分区，collect()调用将不会返回一个有序的结果。
+
+我们已经在之前的例子看到了有关collect()的使用，所以我们在这里将跳过代码例子。
+
+###### count()
+
+在前面的例子看到过，count()将会返回RDD中的元素总数。例如，当我们从文件系统中加载一个文件，count()函数返回的是文件中的总行数。count通常用于单元测试，但它是一个重操作的action，因为在返回一个计数前会重新计算RDD图。如果有一个你经常需要检查行数的数据集，这时将它缓存比较合适（我们之后会看到cache())。
+
+Spark框架提供了一些count函数的变种：
+
+​	countByValue()：返回在RDD每个唯一值的以(value,count)为数据对的map统计。
+
+​	countByValueApprox()：一个CountByValue()的近似版本，这将返回一个可能不完整带误差边界的结果。
+
+​	countByKey()：仅适用于类型为(K,V)的RDD，返回每个key计数的(key,number)map。
+
+###### take(n)
+
+如果你想从结果数据集中取出前面的元素，take是一个能派得上用场的函数。这个函数将从RDD中取出前n个元素。由于RDD通常有多于一个分区，take(n)将会扫描一个分区，并用从该分区得到的结果来预估需要多少额外的分区，以满足n个输出行的期望请求。这个函数在单元测试和Spark程序调试时非常高效。
+
+take(n)也有一些spark的变种：
+
+​	takeSample(withReplacement, num, [seed])：顾名思义，它与take()非常相似，但返回一个以数组形式的RDD固定大小采样子集。特别要注意的是当使用该方法时，只有你期望结果数组是比较小时才去调用它，因为所有返回的数据都将被载入到驱动器的内存。
+
+​	takeOrdered(n, [ordering])：从RDD返回的前n个元素是由隐含的Ordering[T]定义的。与takeSample()方法相似的是，这个方法返回数组形式的数据，并将载入到驱动器内存。
+
+例子2.18：Scala的takeOrdered()：
+
+​	sc.parallelize(Seq(10, 4, 2, 12, 3)).takeOrdered(1)
+
+​	// 返回 Array(2)
+
+​	sc.parallelize(Seq(2,3,4,5,6)).takeOrdered(2)
+
+​	// 返回 Array(2, 3)
+
+###### first()
+
+​	first本质上是take(1)，它在spark中用一种很相似的方法来实现。基本上，该函数将返回RDD中的第一个元素。
+
+###### saveAsXXFile()
+
+在数据集成应用中，通常在执行了transformation或一个机器学习模型等的主要操作后，会将数据保存到文件中。Spark提供了三个趁手的saveAsXXXFile()函数，每个都有相似的语法，但些微不同的含义，这三个方法如下：
+
+​	saveAsTextFile(path)：它允许将RDD当作文本文件存入到本地系统、HDFS或任何其它Hadoop支持的文件系统。输入的元素可以是任意类型，然而，在存入之前，Spark会对每个元素执行toString()以转换成文本。我们将在有关用Spark做ETL的章目里看到它的使用例子。
+
+​	saveAsSequenceFile(path)*：这个方法仅在Java和Scala中可用，将RDD作为一个Hadoop SequenceFile写入到由参数指定的路径。这个路径可以指向本地文件系统、HDFS或任何其它Hadoop支持的文件系统。
+
+​	saveAsObjectFile(path)*：这个方法再次只适用于Java和Scala。RDD中的元素会写入到参数指定的路径，且能够用Spark Context的objectFile()方法重新加载。
+
+***注意***：saveAsSequenceFile和saveAsObjectFile()仅适用于Java和Scala。
+
+###### foreach(func)
+
+我们已经看过map函数，其作用基本上是在RDD的每个元素上应用一个方法，并返回另一个RDD作为输出。考虑有这么一个场景，你想要对RDD的每个元素应用一个操作，但不返回结果给驱动程序。在这种特别的场景，你可以用foreach(func)来初始化一个计算，而不用向驱动程序返回结果。你将会使用它的典型案例：
+
+​	更新一个accumulator（查看**共享变量**小节）
+
+​	与外部系统交互，例如，存储到一个数据库
+
+由于我们将在之后的小节**共享变量**中讲解accumulator，现在只需要理解accumulator是一个用于在executor之间聚合信息的变量。我们已经操作过README.md文本文件并做了一些基础的词计数，但业务上想要清楚文件的平均词长度。现在，如果你没有有关MPP平台的背景，你可能会认为计算平均值仅仅是一个简单的操作。事实上Spark是一个分布式系统，意味着每个executor的操作是各自独立的，为了得到全局聚合，你需要定义一个全局变量，以便所有的executor在知道每个词的长度之后能够更新它。这也是accumulator能够救场的地方。另外，我们也将需要统计每个词总量，这需要一个foreach()操作的地方。让我们跳入一个Python例子来看看foreach()的使用：
+
+![foreach_usage_find_average_wordlen_Python.png](attachments/foreach_usage_find_average_wordlen_Python.png)
+
+#### PairRDDs
 
 
 
