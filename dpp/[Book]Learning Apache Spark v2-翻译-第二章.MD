@@ -858,6 +858,37 @@ reduceByKey()和groupByKey()可以用于相似的结果，但它们的执行有�
 
 第一步将数据在集群上并行化。现在分析combineByKey()的每一步，查看做了什么以解释该操作的语义：
 
-​	lambda val: (val, 1)：如前面所提到的，这是combiner的创建，key的每个分区上会被调用。这将会从在输入数据集中的(key,value)对去除value数据项，并转换成另一个对，这里是(value,1)。所以，例如处理("k1", 10)，它将取其value 10，并转化成(10,1)对，这基本上是combiner的初始化。每次当它遇到一个新key的partition，将会重复执行相同的处理。不可思议的地方就隐藏在这个操作combineByKey的名字里。
+​	lambda val: (val, 1)：如前面所提到的，这是combiner的创建，在key的每个分区上会被调用。这将会从在输入数据集中的(key,value)对去除value数据项，并转换成另一个对，这里是(value,1)。所以，例如处理("k1", 10)，它将取其value 10，并转化成(10,1)对，这基本上是combiner的初始化。每次当它遇到一个新key的partition，将会重复执行相同的处理。不可思议的地方就隐藏在这个操作combineByKey的名字里。
 
-​	lambda valcntpair, val: (valcntpair[0]+val, valcntpair[1]+1)：这是合并value的步骤，
+​	lambda valcntpair, val: (valcntpair[0]+val, valcntpair[1]+1)：这是合并value的步骤，即每次在分区内遇到另一个key时该操作都会执行。当这种情况出现时（发现另一个key），它使用在创建combiner过程生成的valcntpair(value-count pair的缩写)，在已存在的对象中合入新的value和计数。在我们的例子中，逻辑是非常简单的，将值加入到已经聚合的值中，并对计数累加1以说明我们找到了另外一个key。（？）
+
+​	lambda valcntpair,valcntpairnext:((valcntpair[0]+valcntpairnext[0]), (valcntpair[1]+valcntpairnext[1]))：这一步是以前提到的，合并combiner，基本上表示你可能有多个分区的多个combiner。本质上，这是出现的所有value和它们计数的全局总和。最终结果就是总的value和最终计数。
+
+对Scala偏爱的读者，请查看如下同样的Scala例子：
+
+例子2.20:Scala的combineByKey()例子：
+
+​	val sampleData = sc.parallelize(Array(("k1", 10), ("k2", 5), ("k1", 6), ("k3", 4), ("k2", 1), ("k3", 4)))
+
+​	val sumCount = sampleData.combineByKey(
+
+​		value => (value, 1),
+
+​		(valcntpair: (Int,Int), value) => (valcntpair.\_1+value, valcntpair.\_2+1),
+
+​		(valcntpair: (Int,Int), valcntpairnext: (Int,Int)) => ((valcntpair._1+valcntpairnext.\_1), (valcntpair.\_2+valcntpairnext.\_2))
+
+​	)
+
+​	sumCount.take(3)
+
+​	val avgByKey = sumCount.map{case (label, value) => (lable, value.\_1/value.\_2)}
+
+​	avgByKey.take(3)
+
+
+
+***注意***：我们已经看到了在一个key-value对上求平均值的实现，本章之前也提供了一个非常好的数据集存在于storesales.csv文件中，作为例子，你能用你喜爱的编程语言实现每个店的平均销量吗？再也没有比在自己的数据集上实现该例子能更好的理解该主题的方法了。
+
+#### 基于两个PairRDD的transformation
+
