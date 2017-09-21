@@ -892,3 +892,69 @@ reduceByKey()和groupByKey()可以用于相似的结果，但它们的执行有�
 
 #### 基于两个PairRDD的transformation
 
+到目前为止，我们所看到的transformation都是基于单个的PairRDD。然而，重点掌握应用在一个以上PairRDD的两个transformation也是很重要的，在一些现实场景中，你可能要处理多个数据集，这是事实或维度（？），并且要基于它们的key-value将它们联合得到一个最终的数据集。
+
+这两个主要的PairRDD transformation与之前看到的伪集合操作很相似。除了substraction和cogrouping操作外，我们还有三个联合操作join、leftOuterJoin和rightOutJoin。
+
+| join           | 返回一个包含匹配key的来自两个RDD的所有对元素的RDD |
+| -------------- | ----------------------------- |
+| leftOuterJoin  | 执行左外联合                        |
+| rightOuterJoin | 执行右外联合                        |
+| coGroup        | 将在两个RDD中有相同key的数据分组           |
+
+#### 基于PairRDD的action
+
+与标准RDD提供的action相似，PairRDD提供的一些action与之前讨论的action本质上是一样的，除了会接受一个key作为参数：
+
+| countByKey()   | 与count() action相似，但返回基于key的统计  |
+| -------------- | ------------------------------ |
+| collectAsMap() | 以map形式返回RDD中的key-value对给master |
+| lookup(key)    | 顾名思义，返回指定key映射的元素              |
+
+#### 共享变量
+
+作为MPP环境的Spark通常不提供共享状态，原因是代码以并行的方式在远程集群节点上执行。在map()和reduce()阶段通常会用到数据和变量的单独副本，如果提供在多个执行任务间可读写的共享变量将会极大损害效率。然而，Spark还是提供了两种共享变量的类型：
+
+​	广播变量：在每台机器上缓存的只读变量
+
+​	累加器：具备关联（associative）和累加（commutative）属性的变量
+
+###### 广播变量
+
+​	在MPP环境中大规模的数据移动通常是影响性能的主要因素，因此在集群环境上工作时需要对降低数据移动做慎重考虑。一种减少数据移动的方法是在机器上缓存常访问的数据对象，这也是Spark的广播变量的本质所在，即在每个机器上保留只读变量的缓存，而不是随任务传输副本。当你需要一个小数据集的相同副本，并且在集群上的每个节点都可访问时，这种变量很适用。Spark将会用一种非常高效的算法将数据分发到工作节点：
+
+​	广播变量由调用程序/驱动程序设定，并由集群上的worker取用；
+
+​	由于目的是在集群上共享数据，一旦设定后即为只读；
+
+​	当第一次读取时，广播变量才会被取来存储；
+
+一个非常常见的例子是处理网络日志，其中仅包含一个pageId，对应的页面标题存放在查询表中。在分析网络日志的过程中，你可能想要网络日志中的pageId与在查询表中的联合起来，这样就可以识别出哪个特定的页面被访问，哪个页面获得最多点击，哪个页面丢失了最多的客户，等等。这可以将网页查询表广播到集群上来实现效果。对于广播变量的例子，请访问附录“有关Spark更多的信息”。
+
+###### 累加器
+
+累加器是一种支持关联和累积特征的变量，这对并行计算也是必须的。它们通常被用于实现计数器，并作为一种Spark支持的原生的数值类型。累加器不同于广播变量的原因是：
+
+​	它们并不是只读的；
+
+​	集群上的executor可以往累加器变量增加值；
+
+​	驱动程序可以访问到累加器变量的值；
+
+​	有关累加器的例子，请访问附录“有关Spark的更多信息”；
+
+
+
+## 参考
+
+​	https://spark.apache.org/docs/latest/programming-guide.html
+
+​	http://www.purplemath.com/modules/numbprop.htm
+
+## 总结
+
+在本章中，我们讲解了创建一个RDD的概念，如何操作RDD的数据，RDD支持的transformation和action，以及用多个代码例子来解释tranformation和action的区别。最终，我们转向了PairRDD这个高级主题，展示了PairRDD的创建以及一些高级的RDD transformation。
+
+现在我们准备好了说明ETL过程，Spark可以读写数据的外部存储系统类型，包括外部文件系统、Apache Hadoop的HDFS、Apache Hive、Amazon S3等等。我们也将看一看最流行的数据库的连接器，以及如何更优地从存储系统上加载和回存数据。
+
+然而，在开始下一章之前，好好休息一下，你确实值得这么做！
