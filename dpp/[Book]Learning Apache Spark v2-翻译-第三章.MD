@@ -132,3 +132,63 @@ ETL处理的一个重要部分是在平台之上运行的应用执行处理之�
 
 ###### CSV和TSV文件
 
+CSV是一种通用的数据交易格式，被大多消费者、业务和科学应用所广泛支持，其最常用的一个场景是在应用和平台间移动数据，且在许多场景中已经被ETL应用当作事实上的标准。除此之外，大量的公开数据是CSV格式。
+
+自Spark2.0开始，CSV现在是一个基于DataBricks的Spark-CSV模块（http://bit.ly/2cAXCyr）的原生数据源。重点需要理解的是CSV通常表示一个结构化的数据集，在文件中有由逗号分割的特定列数。在更深入些之前，我们需要理解，到现在为止，我们只使用过RDD API，但是以非结构化数据角度来查看数据，Spark框架并不知道你的RDD内容，只是当作一个可以持久化、在网络传输或者用迭代器操作的对象，这明显意味着它限制了框架执行高级优化的能力（例如压缩等等）。然而，由定义而来的应用结构化意味着，我们将限制表达能力。但是，我们通常需要对我们的数据做什么？通常的计算是读取数据、联合数据、过滤数据、统计数据以及聚合数据，这意味着，即使我们有更多结构化API，我们可以应用到多种计算上（？）。
+
+DataFrame是一种不可变的、组织成有名列的分布式数据集合。如果你有数据库背景，可以把它类比成数据库表。如果你有Python/R背景，你将发现Spark的DataFrame使用起来极为灵活（？）；然而，框架提供了更丰富的优化，DataFrame的目标是掩盖RDD的复杂性，并让Spark为更多的人所接受。
+
+Spark在2.0版本中统一了DataFrame和Dataset（直到1.6还是分开的），这为你提供编译时的语法和分析错误报告，该特性又比较像类型化的RDD。Dataset API是类型安全的对象，可以操作编译好的lambda函数。我们将在第5章***Spark流处理***讨论DataFrame和Dataset的更多细节，现在介绍它们的原因是我们想用最简单的方式来读取CSV文件，直接用SparkSession并返回一个DataFrame而非一个RDD。
+
+我们将加载一个有关UK的房屋价格数据集，由land registery发布，且在链接http://bit.ly/2cb58h下载该数据集（注：貌似现在”失联“了）。
+
+例子3.4:用Scala读取CSV：
+
+​	val pricePaidDS = spark.read.format("csv").option("header", "false").load("file:///home/spark/sampledata/pp-monthly-update-new-version.csv")
+
+当然，你仍可以反过来用老式工作方式，用toJavaRDD()操作将dataset转换成一个RDD。
+
+例子3.5:用Python读取CSV：
+
+​	pricePaidDS = spark.read.csv("file:///home/spark/sampledata/pp-monthly-update-new-version.csv", header=False)
+
+例子3.6:用Java读取CSV：
+
+​	SparkSession spark = SparkSession.builder().master("local").appName("SparkCSVExample").config("spark.some.config.option", "some-value").getOrCreate();
+
+​	Dataset\<Row\> pricePaidDS = spark.read().csv(fileName);
+
+​	JavaRDD\<Row\> pricePaidRDD = pricePaidDS.toJavaRDD();
+
+###### CSV文件的写入
+
+写入CSV文件与读非常相似，尽管你必须使用spark.write()存储数据，并选择csv作为输出格式。重要的是要意识到，Spark将写到多个分输出文件，可能你需要它们拼接在一起。
+
+例子3.7:用Scala写入CSV：
+
+​	pricePaidDS.write.format("csv").save("file:///home/spark/sampledata/price_paid_outpout")
+
+###### Tab分割的文件
+
+Tab分割的文件（TSV）也是一种存储结构化数据的通用方法，可以作为CSV格式的替代，这经常有难度，由于文件数据广泛使用了字面的逗号，因此需要提供转义的逗号。Spark让你可以在相同效率方式下读取TSV文件。记住，tsv与csv相似，仅仅不同之处是分隔符从逗号变为tab。
+
+我们有一个样本文件test.tsv，这是一个tab分隔的文件，用于展示需要用于加载tsv文件的代码。
+
+例子3.8:用Scala读取TSV：
+
+​	val testDS = spark.read.format("csv").option("delimiter", "t").load("/home/spark/sampledata/test.tsv")
+
+例子3.9：用Python读取TSV：
+
+​	testDS = spark.read.csv("/home/spark/sampledata/test.tsv", sep="t")
+
+例子 3.10:用J啊v啊读取TSV：
+
+​	SparkSession spark = SparkSession.builder().master("local").appName("SparkTSVExample").config("spark.some.config.option", "some-value").getOrCreate();
+
+​	Dataset\<Row\> pricePaidDS = spark.read().option("sep", "t").csv(fileName);
+
+如你所见，你将仅仅需要指定分隔符sep并传入t参数，指定你正在读取一个TSV文件。
+
+###### JSON文件
+
