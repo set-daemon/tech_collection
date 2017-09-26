@@ -164,7 +164,53 @@ php https://github.com/michelf/php-markdown
 
 
 
+####镜像
 
+http://mirrors.163.com/ 网易开源镜像
+
+http://mirrors.sohu.com/ 搜狐开源镜像
+
+http://mirrors.aliyun.com/ 阿里云开源镜像
+
+http://mirrors.ustc.edu.cn/ 中国科技大学
+
+https://mirrors.tuna.tsinghua.edu.cn/ 清华
+
+http://mirrors.jlu.edu.cn/ 吉大
+
+http://mirror.bit.edu.cn/web/ 北理工
+
+http://mirror.lzu.edu.cn/ 兰州大学
+
+http://ftp.sjtu.edu.cn/html/resources.xml 上海交大
+
+http://mirrors.neusoft.edu.cn/ 大连东软
+
+http://mirror.neu.edu.cn/ 东北大学
+
+http://mirror.bjtu.edu.cn/cn/ 北京交大
+
+http://mirrors.zju.edu.cn/ 浙大
+
+http://mirrors.cqu.edu.cn/ 重庆大学
+
+http://mirror.nyist.edu.cn/ 南阳理工
+
+http://www.opencas.org/mirrors/ 中科院
+
+http://mirror.ihep.ac.cn/ 高能物理研究所
+
+http://mirrors.zzu.edu.cn/ 郑州大学
+
+http://mirror.hust.edu.cn/ 华中科技大学
+
+http://mirror.dlut.edu.cn/ 大连理工
+
+http://mirrors.ctyun.cn/ 电信天翼
+
+https://mirrors.cnnic.cn/ 中国互联网络信息中心
+
+<----参考http://www.cnblogs.com/xunianchong/p/5684042.html
 
 
 
