@@ -16,6 +16,7 @@
 | 华中理工大学 | http://pypi.hustunique.com/              |
 | 山东理工大学 | http://pypi.sdutlinux.org/               |
 | 豆瓣     | http://pypi.douban.com/simple/           |
+| 网易     | http://mirrors.163.com/pypi/simple/      |
 
 
 
