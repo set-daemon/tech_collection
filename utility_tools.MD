@@ -28,7 +28,11 @@
 
 [官网](http://dia-installer.de/)
 
-
+#### inkscape
+[官网](https://inkscape.org)，[中文社区](https://inkscape.org/zh/)
+#### gimp
+[官网](https://www.gimp.org/)
+参考：http://xbeta.info/gimp.htm
 
 #### Typora
 
