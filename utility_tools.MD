@@ -166,7 +166,13 @@ Python科学计算环境。
 
 php https://github.com/michelf/php-markdown
 
+####scws分词库
 
+php http://www.xunsearch.com/scws/，https://github.com/hightman/scws/
+
+#### arduino
+
+开源硬件框架，国内论坛：http://www.arduino.cn/，官网：http://www.arduino.cc
 
 ####镜像
 
