@@ -234,7 +234,12 @@ http://ping.eu/ping/
 
 https://bookfere.com
 
+#### 有声图书
+ http://esl-bits.net/
+参考：https://www.zhihu.com/question/27492973
 
+#### 宇宙观测工具
+http://stars.chromeexperiments.com/ 
 
 
 
