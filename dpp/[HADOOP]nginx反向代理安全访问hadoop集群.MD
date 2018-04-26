@@ -110,6 +110,6 @@ server {
 ```
 
 ## 参考
-1. (通过nginx实现内网hadoop、hbase集群对外访问web界面)[http://blackwing.iteye.com/blog/1949154]
-2. (nginx用户认证配置)[http://www.ttlsa.com/nginx/nginx-basic-http-authentication/]
-3. (nginx添加认证)[https://www.cnblogs.com/cuishuai/p/7761031.html]
+1. [通过nginx实现内网hadoop、hbase集群对外访问web界面](http://blackwing.iteye.com/blog/1949154)
+2. [nginx用户认证配置](http://www.ttlsa.com/nginx/nginx-basic-http-authentication/)
+3. [nginx添加认证](https://www.cnblogs.com/cuishuai/p/7761031.html)
